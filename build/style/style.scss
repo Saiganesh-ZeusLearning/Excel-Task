@@ -1,0 +1,43 @@
+body {
+    margin: 0;
+}
+
+canvas {
+    display: block;
+}
+
+
+.wrapper{
+    width: fit-content;
+    height: fit-content;
+    display: flex;
+    position: relative;
+}
+
+.scrollable{
+  position: relative;
+}
+
+.col-label{
+    background-color: white;
+    position: sticky;
+    top: 0; 
+    z-index: 10;
+}
+
+.row-label{
+    background-color: white;
+    position: sticky;
+    left: 0;
+    z-index: 10;
+}
+
+.left-corner{
+    position: fixed;
+    z-index: 11;
+    height: 23px;
+    width: 49px;
+    border-bottom: solid 2px grey;
+    border-right: solid 2px grey;
+    background-color: rgb(255, 253, 253);
+}

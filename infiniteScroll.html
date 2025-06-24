@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Canvas Tile Mount/Unmount Demo</title>
+<style>
+  body, html {
+    margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden;
+    font-family: sans-serif;
+  }
+  #sheet-container {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    overflow-y: scroll;
+    border: 1px solid #ccc;
+    background: #fafafa;
+  }
+  .tile {
+    position: absolute;
+    border: 1px solid #ddd;
+    background: white;
+    box-sizing: border-box;
+  }
+</style>
+</head>
+<body>
+ 
+<div id="sheet-container"></div>
+ 
+<script>
+(() => {
+  const sheetContainer = document.getElementById('sheet-container');
+ 
+  // Config
+  const TILE_ROWS = 50;
+  const TILE_COLS = 30;
+  const CELL_WIDTH = 40;
+  const CELL_HEIGHT = 20;
+ 
+  const TOTAL_ROWS = 1000;  // simulate big sheet
+  const TOTAL_COLS = 500;
+ 
+  // Calculate total sheet height & width (for scrollbar)
+  const sheetHeight = TOTAL_ROWS * CELL_HEIGHT;
+  const sheetWidth = TOTAL_COLS * CELL_WIDTH;
+ 
+  // Set container scroll size by setting a big inner div
+  const spacer = document.createElement('div');
+  spacer.style.width = 700 + 'px';
+  spacer.style.height = 700 + 'px';
+  sheetContainer.appendChild(spacer);
+ 
+  // Track mounted tiles keyed by "row_col"
+  const mountedTiles = new Map();
+ 
+  // How many tiles fit vertically and horizontal (viewport)
+  const viewportHeight = sheetContainer.clientHeight;
+  const viewportWidth = sheetContainer.clientWidth;
+ 
+  const tilesInViewVertical = Math.ceil(viewportHeight / (TILE_ROWS * CELL_HEIGHT));
+  const tilesInViewHorizontal = Math.ceil(viewportWidth / (TILE_COLS * CELL_WIDTH));
+ 
+  // Buffer of extra tiles above and below viewport for smoothness
+  const VERTICAL_BUFFER = 1;
+ 
+  // Draw a tile canvas for given tileRow and tileCol
+  function drawTileCanvas(tileRow, tileCol) {
+    const canvas = document.createElement('canvas');
+    canvas.width = TILE_COLS * CELL_WIDTH;
+    canvas.height = TILE_ROWS * CELL_HEIGHT;
+    const ctx = canvas.getContext('2d');
+ 
+    ctx.font = '10px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+ 
+    for (let r = 0; r < TILE_ROWS; r++) {
+      const rowIndex = tileRow * TILE_ROWS + r;
+      if (rowIndex >= TOTAL_ROWS) break;
+ 
+      for (let c = 0; c < TILE_COLS; c++) {
+        const colIndex = tileCol * TILE_COLS + c;
+        if (colIndex >= TOTAL_COLS) break;
+ 
+        // Draw cell border
+        ctx.strokeStyle = '#ccc';
+        ctx.strokeRect(c * CELL_WIDTH, r * CELL_HEIGHT, CELL_WIDTH, CELL_HEIGHT);
+ 
+        // Fill cell with simple text row,col
+        ctx.fillStyle = '#000';
+        ctx.fillText(`${rowIndex},${colIndex}`, c * CELL_WIDTH + CELL_WIDTH/2, r * CELL_HEIGHT + CELL_HEIGHT/2);
+      }
+    }
+    return canvas;
+  }
+ 
+  // Mount tile div+canvas
+  function mountTile(tileRow, tileCol) {
+    const key = `${tileRow}_${tileCol}`;
+    if (mountedTiles.has(key)) return; // already mounted
+ 
+    const tileDiv = document.createElement('div');
+    tileDiv.classList.add('tile');
+    tileDiv.style.width = TILE_COLS * CELL_WIDTH + 'px';
+    tileDiv.style.height = TILE_ROWS * CELL_HEIGHT + 'px';
+    tileDiv.style.left = tileCol * TILE_COLS * CELL_WIDTH + 'px';
+    tileDiv.style.top = tileRow * TILE_ROWS * CELL_HEIGHT + 'px';
+ 
+    const canvas = drawTileCanvas(tileRow, tileCol);
+    tileDiv.appendChild(canvas);
+ 
+    sheetContainer.appendChild(tileDiv);
+    mountedTiles.set(key, tileDiv);
+  }
+ 
+  // Unmount tile
+  function unmountTile(tileRow, tileCol) {
+    const key = `${tileRow}_${tileCol}`;
+    const tileDiv = mountedTiles.get(key);
+    if (!tileDiv) return;
+    sheetContainer.removeChild(tileDiv);
+    mountedTiles.delete(key);
+  }
+ 
+  // On scroll, mount visible tiles and unmount others
+  function onScroll() {
+    const scrollTop = sheetContainer.scrollTop;
+    const scrollLeft = sheetContainer.scrollLeft;
+ 
+    // Compute visible tile ranges with buffer
+    const firstVisibleTileRow = Math.floor(scrollTop / (TILE_ROWS * CELL_HEIGHT)) - VERTICAL_BUFFER;
+    const lastVisibleTileRow = firstVisibleTileRow + tilesInViewVertical + VERTICAL_BUFFER * 2;
+ 
+    const firstVisibleTileCol = Math.floor(scrollLeft / (TILE_COLS * CELL_WIDTH));
+    const lastVisibleTileCol = firstVisibleTileCol + tilesInViewHorizontal;
+ 
+    // Clamp ranges
+    const rowStart = Math.max(0, firstVisibleTileRow);
+    const rowEnd = Math.min(Math.floor(TOTAL_ROWS / TILE_ROWS), lastVisibleTileRow);
+    const colStart = Math.max(0, firstVisibleTileCol);
+    const colEnd = Math.min(Math.floor(TOTAL_COLS / TILE_COLS), lastVisibleTileCol);
+ 
+    // Mount visible tiles
+    for (let r = rowStart; r <= rowEnd; r++) {
+      for (let c = colStart; c <= colEnd; c++) {
+        mountTile(r, c);
+      }
+    }
+ 
+    // Unmount tiles not in viewport
+    for (const key of mountedTiles.keys()) {
+      const [r, c] = key.split('_').map(Number);
+      if (r < rowStart || r > rowEnd || c < colStart || c > colEnd) {
+        unmountTile(r, c);
+      }
+    }
+  }
+ 
+  // Initial mount of visible tiles
+  onScroll();
+ 
+  // Attach scroll handler
+  sheetContainer.addEventListener('scroll', onScroll);
+})();
+</script>
+ 
+</body>
+</html>
+ 
