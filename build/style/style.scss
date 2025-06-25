@@ -2,41 +2,66 @@ body {
     margin: 0;
 }
 
-canvas {
-    display: block;
-}
-
-
 .wrapper{
     width: fit-content;
     height: fit-content;
-    display: flex;
-    position: relative;
 }
 
 .scrollable{
-  position: relative;
+    width: 100vw;
+    height: 100vh;
+    overflow: auto;
+    position: relative;
 }
 
-.col-label{
+
+.row-label-wrapper{
+    z-index:20;
+    width: 50px;
     background-color: white;
-    position: sticky;
-    top: 0; 
-    z-index: 10;
 }
 
 .row-label{
+    position: absolute;
+    top: 24px;
+}
+
+
+.col-label-wrapper{
+    height: 25px;
     background-color: white;
-    position: sticky;
-    left: 0;
     z-index: 10;
 }
 
+.col-label{
+    position: absolute;
+    top: 0px;
+    left: 50px;
+}
+
+.main-canvas-wrapper{
+    z-index: -1;
+}
+
+.main-canvas{
+    position: absolute;
+    top: 26px;
+    left: 50px;
+}
+
+#fakeContent {
+    max-height: calc(100000 * 24px); /*🚨 2 million pixels tall */
+    max-width: calc(1000 * 100px);
+}
+
+
 .left-corner{
     position: fixed;
-    z-index: 11;
+    top: 0px;
+    left: 0px;
+    z-index: 21;
     height: 23px;
-    width: 49px;
+    width: 48px;
     border-bottom: solid 2px grey;
     border-right: solid 2px grey;
     background-color: rgb(255, 253, 253);

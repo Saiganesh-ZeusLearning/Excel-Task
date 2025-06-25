@@ -1,3 +1,3 @@
-import RowLabelCanvas from "./Elements/RowManager.js";
+import { renderExcel } from "./Core/CanvasRenderer.js";
 
-new RowLabelCanvas(".row-label");
+renderExcel();
