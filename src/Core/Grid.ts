@@ -32,27 +32,47 @@ export class GridCanvas {
   }
 
 
-  drawGrid(ctx: CanvasRenderingContext2D, scrollTop: number, scrollLeft: number) {
+  drawGrid(ctx: CanvasRenderingContext2D, startRow: number, startCol: number) {
     ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
     // Vertical lines
-    for (let col = 0; col <= this.totalCols; col++) {
-      const x = col * this.cellWidth;
+    let x = 0.5;
+
+    for (let col = startCol; col <= this.totalCols + startCol; col++) {
+
       ctx.beginPath();
-      ctx.moveTo(x + 0.5, 0);
-      ctx.lineTo(x + 0.5, this.canvas.height);
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, this.canvas.height);
       ctx.strokeStyle = "#ddd";
       ctx.stroke();
+      x += this.cellWidth;
     }
 
     // Horizontal lines
-    for (let row = 0; row <= this.totalRows; row++) {
-      const y = row * this.cellHeight - 1;
+    let y = 0.5;
+    for (let row = startRow; row <= this.totalRows + startRow; row++) {
+
       ctx.beginPath();
-      ctx.moveTo(0, y + 0.5);
-      ctx.lineTo(this.canvas.width, y + 0.5);
+      ctx.moveTo(0, y);
+      ctx.lineTo(this.canvas.width, y);
       ctx.strokeStyle = "#ddd";
       ctx.stroke();
+      y += this.cellHeight;
+    }
+
+    ctx.font = "12px Arial";
+    ctx.fillStyle = "#000";
+    for (let r = 0; r < this.totalRows; r++) {
+      const rowIndex = startRow + r + 1;
+
+      for (let c = 0; c < this.totalCols; c++) {
+        const colIndex = startCol + c + 1;
+
+        if(rowIndex == 3 && colIndex == 3){
+          const text = `R${rowIndex}C${colIndex}`;
+          ctx.fillText(text, c * 100 + 5, r * 24 + 17);
+        }
+      }
     }
   }
 }

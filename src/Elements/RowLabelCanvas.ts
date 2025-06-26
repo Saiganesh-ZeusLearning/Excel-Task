@@ -1,13 +1,20 @@
+interface rowMap{
+    rowIndex: number;
+    rowHeight: number;
+    isSelected: boolean;
+}
+
 export class RowLabelCanvas {
   private canvas: HTMLCanvasElement;
   private rowWrapper: HTMLElement;
 
   private width = 50;
-  private cellHeight = 24;
   private totalRows = 40;
   private headerWidth = 49;
   private headerHeight = 1;
-  private height = this.totalRows * this.cellHeight + this.headerHeight;
+  public cellHeight = 24;
+  public height = this.totalRows * this.cellHeight + this.headerHeight;
+  // public rowMap: rowMap;
 
   /**
    * Initializes the RowLabelCanvas class
@@ -45,23 +52,24 @@ export class RowLabelCanvas {
   /**
    * Draws row lines and row number labels
    */
-  drawRows(ctx: CanvasRenderingContext2D, scrollTop: number): void {
+  drawRows(ctx: CanvasRenderingContext2D, startRow: number): void {
     ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-    for (let row = 0; row < this.totalRows; row++) {
-      const y = row * this.cellHeight + 1;
-
+    let y = 0.5;
+    for (let row = startRow; row < this.totalRows + startRow; row++) {
+      
       // Draw horizontal line
       ctx.beginPath();
-      ctx.moveTo(0, y + 0.5);
-      ctx.lineTo(this.canvas.width, y + 0.5);
+      ctx.moveTo(0, y);
+      ctx.lineTo(this.canvas.width, y);
       ctx.strokeStyle = "#ddd";
       ctx.stroke();
-
+      
       // Draw row number
       ctx.fillStyle = "#000";
       ctx.font = "12px sans-serif";
-      ctx.fillText((row + 1 + Math.ceil(scrollTop / 24)).toString(), 25, y + 16);
+      ctx.fillText((row + 1).toString(), 25, y + 16);
+      y += this.cellHeight;
     }
 
     this.drawHeaderBorders(ctx);
@@ -74,7 +82,7 @@ export class RowLabelCanvas {
     // Row border lines
     ctx.beginPath();
     ctx.moveTo(this.headerWidth, 0);
-    ctx.lineTo(this.headerWidth, this.canvas.height);
+    ctx.lineTo(this.headerWidth + 0.5, this.canvas.height + 0.5);
     ctx.strokeStyle = "#000";
     ctx.stroke();
   }

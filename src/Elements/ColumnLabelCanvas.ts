@@ -3,7 +3,7 @@ export class ColumnLabelCanvas {
   private colWrapper: HTMLElement;
 
   private height = 25;
-  private cellWidth = 100;
+  public cellWidth = 100;
   private totalCols = 20;
   private headerWidth = 0;
   private headerHeight = 24;
@@ -44,31 +44,43 @@ export class ColumnLabelCanvas {
   /**
    * Draws vertical lines and column labels (A-Z)
    */
-  drawColumns(ctx: CanvasRenderingContext2D, scrollLeft: number): void {
+  drawColumns(ctx: CanvasRenderingContext2D, startCol: number): void {
     ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
     // Col Label Function
     function ColLabel(num: number): string {
-      num--;
-      if (num < 0) return "";
-      return ColLabel(Math.floor(num / 26)) + String.fromCharCode("A".charCodeAt(0) + (num % 26));
-    }
-    for (let col = 0; col <= this.totalCols; col++) {
-      const x = this.headerWidth + col * this.cellWidth;
+      let label = "";
+      num--; // Adjust to 0-based index
 
+      while (num >= 0) {
+        label = String.fromCharCode("A".charCodeAt(0) + (num % 26)) + label;
+        num = Math.floor(num / 26) - 1;
+      }
+
+      return label;
+    }
+
+
+    let x = 0.5;
+
+    for (let col = 0 + startCol; col <= startCol + this.totalCols; col++) {
+
+      // if(col === 5){
+      //   x += this.cellWidth;
+      // }
       // Draw vertical line
       ctx.beginPath();
-      ctx.moveTo(x + 0.5, 0);
-      ctx.lineTo(x + 0.5, this.canvas.height);
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, this.canvas.height);
       ctx.strokeStyle = "#ddd";
       ctx.stroke();
 
       // Draw column label
-      const colId = scrollLeft / 100;
-      const label = ColLabel(col + (colId) + 1);
+      const label = ColLabel(1 + col);
       ctx.fillStyle = "#000";
       ctx.font = "12px sans-serif";
       ctx.fillText(label, x + 45, 16);
+      x += this.cellWidth
     }
 
     this.drawHeaderBorders(ctx);

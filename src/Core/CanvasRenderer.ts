@@ -1,5 +1,5 @@
-import { ColumnLabelCanvas } from "../Elements/ColumnManager.js";
-import { RowLabelCanvas } from "../Elements/RowManager.js";
+import { ColumnLabelCanvas } from "../Elements/ColumnLabelCanvas.js";
+import { RowLabelCanvas } from "../Elements/RowLabelCanvas.js";
 import { GridCanvas } from "./Grid.js";
 
 export function renderExcel() {
@@ -11,7 +11,7 @@ export function renderExcel() {
     const colObj = new ColumnLabelCanvas(0);
     const colCanvas = colObj.getColCanvas;
     const colCtx = colCanvas.getContext("2d") as CanvasRenderingContext2D;
-    
+
     const gridObj = new GridCanvas();
     const gridCanvas = gridObj.getGridCanvas;
     const gridCtx = gridCanvas.getContext("2d") as CanvasRenderingContext2D;
@@ -24,30 +24,30 @@ export function renderExcel() {
         const scrollTop = scrollContainer.scrollTop;
         const scrollLeft = scrollContainer.scrollLeft;
 
-
+        const startRow = Math.floor(scrollTop / rowObj.cellHeight);  
+        const startCol = Math.floor(scrollLeft / colObj.cellWidth);  
+        
+        const canvasTop = startRow * rowObj.cellHeight;
+        const canvasLeft = startCol * colObj.cellWidth;
+        
         const rowLabel = document.querySelector(".row-label") as HTMLElement;
-        rowLabel.style.top = `${scrollTop + 24}px`
+        rowLabel.style.top = `${canvasTop + 24}px`
         rowLabel.style.left = `${scrollLeft}px`
-        
+
         const colLabel = document.querySelector(".col-label") as HTMLElement;
-        colLabel.style.left = `${scrollLeft + 50}px`
+        colLabel.style.left = `${canvasLeft + 50}px`
         colLabel.style.top = `${scrollTop}px`
-        
+
         const grid = document.querySelector(".main-canvas") as HTMLElement;
-        grid.style.top = `${scrollTop + 26}px`
-        grid.style.left = `${scrollLeft + 50}px`
+        grid.style.top = `${canvasTop + 24}px`
+        grid.style.left = `${canvasLeft + 50}px`
 
 
-        rowObj.drawRows(rowCtx, scrollTop);
-        colObj.drawColumns(colCtx, scrollLeft);
-        gridObj.drawGrid(gridCtx, scrollTop, scrollLeft);
+        rowObj.drawRows(rowCtx, startRow);
+        colObj.drawColumns(colCtx, startCol);
+        gridObj.drawGrid(gridCtx, startRow, startCol);
     })
 }
 
-const scrollDiv = document.querySelector(".scrollable") as HTMLElement;
 
-scrollDiv.addEventListener("click", (e) => {
-        
-    console.log("row", Math.ceil((e.clientY + scrollDiv.scrollTop -25)/24) , "col",  Math.ceil((e.clientX + scrollDiv.scrollLeft -50)/100));
-})
 
