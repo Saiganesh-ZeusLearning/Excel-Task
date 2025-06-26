@@ -9,6 +9,8 @@ export class InputManager {
   private prevLeft: number = 0;
   private prevRow: number = 0;
   private prevCol: number = 0;
+  private currRow: number = 0;
+  private currCol: number = 0;
 
   private top: number = 0;
   private left: number = 0;
@@ -32,8 +34,8 @@ export class InputManager {
     this.left = Math.floor((e.clientX + scrollLeft - 50) / 100) * 100 + 50;
     this.top = Math.floor((e.clientY + scrollTop - 25) / 24) * 24 + 25;
 
-    const row = Math.ceil((e.clientY + scrollTop - 25) / 24);
-    const col = Math.ceil((e.clientX + scrollLeft - 50) / 100);
+    this.currRow = Math.ceil((e.clientY + scrollTop - 25) / 24);
+    this.currCol = Math.ceil((e.clientX + scrollLeft - 50) / 100);
 
     if (this.prevTop !== this.top || this.prevLeft !== this.left) {
       if (this.inputDiv.value !== "") {
@@ -41,29 +43,66 @@ export class InputManager {
         this.inputDiv.value = "";
       }
 
-      if (cellData.has(row, col)) {
-        this.inputDiv.value = cellData.get(row, col) || "";
+      if (cellData.has(this.currRow, this.currCol)) {
+        this.inputDiv.value = cellData.get(this.currRow, this.currCol) || "";
       }
-
       excelRenderer.render();
 
-      this.prevRow = row;
-      this.prevCol = col;
+      this.prevRow = this.currRow;
+      this.prevCol = this.currCol;
       this.prevTop = this.top;
       this.prevLeft = this.left;
+
     }
 
     this.inputDiv.style.top = `${this.top}px`;
     this.inputDiv.style.left = `${this.left}px`;
     this.inputDiv.focus();
+    this.inputDiv.select();
   }
 
   private handleKeyDown(e: KeyboardEvent) {
-    if (e.key === "Enter") {
+    let currRow = Math.floor(Number((this.inputDiv.style.top).replace("px", "")) / 24);
+    let currCol = Math.floor(Number((this.inputDiv.style.left).replace("px", "")) / 100);
+    if (e.key === "Enter" || e.key === "ArrowDown") {
+
+      if (this.inputDiv.value !== "") {
+        cellData.set(currRow, currCol + 1, this.inputDiv.value);
+        this.inputDiv.value = "";
+      }
+
+      if (cellData.has(currRow + 1, currCol + 1)) {
+        this.inputDiv.value = cellData.get(currRow + 1, currCol + 1) || "";
+      }
+
       this.top += 24;
-      this.inputDiv.style.top = `${this.top}px`;
       excelRenderer.render();
+      this.inputDiv.focus();
+      this.inputDiv.select();
+
+    } else if (e.key === "ArrowUp") {
+
+      if (currRow === 1) {
+        return;
+      }
+
+      if (this.inputDiv.value !== "") {
+        cellData.set(currRow, currCol + 1, this.inputDiv.value);
+        this.inputDiv.value = "";
+        this.inputDiv.select();
+      }
+
+      if (cellData.has(currRow - 1, currCol + 1)) {
+        this.inputDiv.value = cellData.get(currRow - 1, currCol + 1) || "";
+      }
+
+      this.top -= 24;
+      excelRenderer.render();
+      this.inputDiv.focus();
+    } else if (e.key === "ArrowLeft") {
+
     }
+    this.inputDiv.style.top = `${this.top}px`;
   }
 }
 

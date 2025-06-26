@@ -19,7 +19,7 @@ export class GridCanvas {
     this.totalCols = this.totalCols;
     this.totalRows = this.totalRows;
 
-    this.setCanvasSize();
+    this.setCanvasSize(ctx);
     this.drawGrid(ctx, 0, 0);
   }
 
@@ -29,10 +29,17 @@ export class GridCanvas {
   }
 
 
-  setCanvasSize() {
-    this.canvas.width = this.cellWidth * this.totalCols + 1;
-    this.canvas.height = this.cellHeight * this.totalRows + 1;
-  }
+setCanvasSize(ctx: CanvasRenderingContext2D) {
+  const dpr = window.devicePixelRatio || 1;
+
+  this.canvas.width = (this.cellWidth * this.totalCols + 1) * dpr;
+  this.canvas.height = (this.cellHeight * this.totalRows + 1) * dpr;
+
+  this.canvas.style.width = this.cellWidth * this.totalCols + 1 + "px";
+  this.canvas.style.height = this.cellHeight * this.totalRows + 1 + "px";
+
+  ctx.scale(dpr, dpr);
+}
 
 
   drawGrid(ctx: CanvasRenderingContext2D, startRow: number, startCol: number) {

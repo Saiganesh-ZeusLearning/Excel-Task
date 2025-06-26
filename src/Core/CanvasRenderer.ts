@@ -52,7 +52,6 @@ export class ExcelRenderer {
     const grid = document.querySelector(".main-canvas") as HTMLElement;
     grid.style.top = `${canvasTop + 24}px`;
     grid.style.left = `${canvasLeft + 50}px`;
-    console.log("asdas")
     rowObj.drawRows(this.rowCtx, this.startRow);
     colObj.drawColumns(this.colCtx, this.startCol);
     gridObj.drawGrid(this.gridCtx, this.startRow, this.startCol);
