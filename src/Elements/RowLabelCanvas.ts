@@ -68,7 +68,8 @@ export class RowLabelCanvas {
       // Draw row number
       ctx.fillStyle = "#000";
       ctx.font = "12px sans-serif";
-      ctx.fillText((row + 1).toString(), 25, y + 16);
+      ctx.textAlign = "end";
+      ctx.fillText((row + 1).toString(), 45, y + 16);
       y += this.cellHeight;
     }
 
@@ -87,3 +88,6 @@ export class RowLabelCanvas {
     ctx.stroke();
   }
 }
+
+
+export const rowObj = new RowLabelCanvas(0);

@@ -1,3 +1,5 @@
+import { cellData } from "../DataStructures/CellData.js";
+
 export class GridCanvas {
   canvas: HTMLCanvasElement;
   cellWidth: number = 100;
@@ -25,6 +27,7 @@ export class GridCanvas {
   get getGridCanvas() {
     return this.canvas;
   }
+
 
   setCanvasSize() {
     this.canvas.width = this.cellWidth * this.totalCols + 1;
@@ -68,8 +71,8 @@ export class GridCanvas {
       for (let c = 0; c < this.totalCols; c++) {
         const colIndex = startCol + c + 1;
 
-        if(rowIndex == 3 && colIndex == 3){
-          const text = `R${rowIndex}C${colIndex}`;
+        if (cellData.has(rowIndex, colIndex)) {
+          const text = `${cellData.get(rowIndex, colIndex)}`;
           ctx.fillText(text, c * 100 + 5, r * 24 + 17);
         }
       }
@@ -77,3 +80,4 @@ export class GridCanvas {
   }
 }
 
+export const gridObj = new GridCanvas();

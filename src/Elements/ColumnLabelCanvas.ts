@@ -98,3 +98,6 @@ export class ColumnLabelCanvas {
     ctx.stroke();
   }
 }
+
+
+export const colObj = new ColumnLabelCanvas(0);
