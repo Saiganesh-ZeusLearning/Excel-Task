@@ -1,4 +1,6 @@
 import { cellData } from "../DataStructures/CellData.js";
+import { colData } from "../DataStructures/ColData.js";
+import { rowData } from "../DataStructures/RowData.js";
 import { excelRenderer } from "../main.js";
 
 export class InputManager {
@@ -27,15 +29,21 @@ export class InputManager {
     this.inputDiv.addEventListener("keydown", this.handleKeyDown.bind(this));
   }
 
+
+
   private handleClick(e: MouseEvent) {
     const scrollLeft = this.scrollDiv.scrollLeft;
     const scrollTop = this.scrollDiv.scrollTop;
 
-    this.left = Math.floor((e.clientX + scrollLeft - 50) / 100) * 100 + 50;
-    this.top = Math.floor((e.clientY + scrollTop - 25) / 24) * 24 + 25;
+    this.currRow = rowData.findRowByPixelY(e.clientY + scrollTop, rowData);
+    this.currCol = colData.findColByPixelX(e.clientX + scrollLeft, colData);
 
-    this.currRow = Math.ceil((e.clientY + scrollTop - 25) / 24);
-    this.currCol = Math.ceil((e.clientX + scrollLeft - 50) / 100);
+    console.log(this.prevRow);
+    
+
+    this.top = rowData.get(this.currRow - 1).prefixHeight;
+    this.left = colData.get(this.currCol - 1).prefixWidth;
+
 
     if (this.prevTop !== this.top || this.prevLeft !== this.left) {
       if (this.inputDiv.value !== "") {
@@ -46,6 +54,7 @@ export class InputManager {
       if (cellData.has(this.currRow, this.currCol)) {
         this.inputDiv.value = cellData.get(this.currRow, this.currCol) || "";
       }
+      this.inputDiv.style.display = "block";
       excelRenderer.render();
 
       this.prevRow = this.currRow;
@@ -54,55 +63,73 @@ export class InputManager {
       this.prevLeft = this.left;
 
     }
-
+    this.inputDiv.style.height = `${rowData.get(this.currRow - 1).height - 6}px`
+    this.inputDiv.style.width = `${colData.get(this.currCol - 1).width - 6}px`;
     this.inputDiv.style.top = `${this.top}px`;
     this.inputDiv.style.left = `${this.left}px`;
     this.inputDiv.focus();
-    this.inputDiv.select();
   }
 
   private handleKeyDown(e: KeyboardEvent) {
-    let currRow = Math.floor(Number((this.inputDiv.style.top).replace("px", "")) / 24);
-    let currCol = Math.floor(Number((this.inputDiv.style.left).replace("px", "")) / 100);
+
     if (e.key === "Enter" || e.key === "ArrowDown") {
 
       if (this.inputDiv.value !== "") {
-        cellData.set(currRow, currCol + 1, this.inputDiv.value);
+        cellData.set(this.currRow, this.currCol, this.inputDiv.value);
         this.inputDiv.value = "";
       }
 
-      if (cellData.has(currRow + 1, currCol + 1)) {
-        this.inputDiv.value = cellData.get(currRow + 1, currCol + 1) || "";
+      if (cellData.has(this.currRow + 1, this.currCol)) {
+        this.inputDiv.value = cellData.get(this.currRow + 1, this.currCol) || "";
       }
-
-      this.top += 24;
-      excelRenderer.render();
-      this.inputDiv.focus();
-      this.inputDiv.select();
-
+      this.currRow++;
     } else if (e.key === "ArrowUp") {
-
-      if (currRow === 1) {
+      
+      if (this.currRow === 1) {
         return;
       }
-
       if (this.inputDiv.value !== "") {
-        cellData.set(currRow, currCol + 1, this.inputDiv.value);
+        cellData.set(this.currRow, this.currCol, this.inputDiv.value);
+        this.inputDiv.value = "";
+      }
+
+      if (cellData.has(this.currRow - 1, this.currCol)) {
+        this.inputDiv.value = cellData.get(this.currRow - 1, this.currCol) || "";
+      }
+      this.currRow--;
+    } else if (e.key === "ArrowLeft") {
+
+      if (this.currCol === 1) {
+        return;
+      }
+      if (this.inputDiv.value !== "") {
+        cellData.set(this.currRow, this.currCol, this.inputDiv.value);
         this.inputDiv.value = "";
         this.inputDiv.select();
       }
+       if (cellData.has(this.currRow, this.currCol-1)) {
+        this.inputDiv.value = cellData.get(this.currRow, this.currCol-1) || "";
+      }
+      this.currCol--;
+    } else if (e.key === "ArrowRight") {
 
-      if (cellData.has(currRow - 1, currCol + 1)) {
-        this.inputDiv.value = cellData.get(currRow - 1, currCol + 1) || "";
+      if (this.inputDiv.value !== "") {
+        cellData.set(this.currRow, this.currCol, this.inputDiv.value);
+        this.inputDiv.value = "";
       }
 
-      this.top -= 24;
-      excelRenderer.render();
-      this.inputDiv.focus();
-    } else if (e.key === "ArrowLeft") {
+      if (cellData.has(this.currRow, this.currCol + 1)) {
+        this.inputDiv.value = cellData.get(this.currRow, this.currCol + 1) || "";
+      }
 
+      this.currCol++;
     }
-    this.inputDiv.style.top = `${this.top}px`;
+
+    this.inputDiv.style.height = `${rowData.get(this.currRow - 1).height - 6}px`;
+    this.inputDiv.style.width = `${colData.get(this.currCol - 1).width - 6}px`;
+    this.inputDiv.style.top = `${rowData.get(this.currRow - 1).prefixHeight}px`;
+    this.inputDiv.style.left = `${colData.get(this.currCol - 1).prefixWidth}px`;
+    excelRenderer.render();
   }
 }
 

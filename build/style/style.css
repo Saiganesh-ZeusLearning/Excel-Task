@@ -1,6 +1,7 @@
 @charset "UTF-8";
 body {
   margin: 0;
+  box-sizing: border-box;
 }
 
 .wrapper {
@@ -26,7 +27,7 @@ body {
 
 .col-label {
   position: absolute;
-  background-color: white;
+  background-color: rgb(150, 184, 214);
   top: 0px;
   left: 50px;
   z-index: 11;
@@ -70,6 +71,8 @@ body {
   font-size: 12px;
   font-family: Arial, Helvetica, sans-serif;
   margin-left: 1px;
+  display: none;
+  caret-color: transparent;
 }
 
 input:focus {

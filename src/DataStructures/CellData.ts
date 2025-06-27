@@ -33,4 +33,4 @@ class CellData {
 
 export const cellData = new CellData();
 
-cellData.set(4, 5, "Hello"); 
+cellData.set(1, 6, "Hello"); 

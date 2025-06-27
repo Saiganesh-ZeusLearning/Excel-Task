@@ -1,3 +1,5 @@
+import { colData } from "../DataStructures/ColData.js";
+
 export class ColumnLabelCanvas {
   private canvas: HTMLCanvasElement;
   private colWrapper: HTMLElement;
@@ -60,14 +62,12 @@ export class ColumnLabelCanvas {
       return label;
     }
 
-
+    let startY = 0
+    let endY = 0;
     let x = 0.5;
+    for (let col = startCol; col <= startCol + this.totalCols; col++) {
 
-    for (let col = 0 + startCol; col <= startCol + this.totalCols; col++) {
-
-      // if(col === 5){
-      //   x += this.cellWidth;
-      // }
+      let currCol = colData.get(col);
       // Draw vertical line
       ctx.beginPath();
       ctx.moveTo(x, 0);
@@ -79,8 +79,11 @@ export class ColumnLabelCanvas {
       const label = ColLabel(1 + col);
       ctx.fillStyle = "#000";
       ctx.font = "12px sans-serif";
-      ctx.fillText(label, x + 45, 16);
-      x += this.cellWidth
+      startY = x;
+      endY = x + currCol.width;
+      const middleY = (startY + endY) / 2 - 4;
+      ctx.fillText(label, middleY, 16);
+      x += currCol.width;
     }
 
     this.drawHeaderBorders(ctx);

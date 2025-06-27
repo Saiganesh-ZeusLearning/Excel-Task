@@ -1,3 +1,5 @@
+import { colData } from "../DataStructures/ColData.js";
+import { rowData } from "../DataStructures/RowData.js";
 import { colObj } from "../Elements/ColumnLabelCanvas.js";
 import { rowObj } from "../Elements/RowLabelCanvas.js";
 import { gridObj } from "./Grid.js";
@@ -24,7 +26,6 @@ export class ExcelRenderer {
     this.gridCtx = gridCanvas.getContext("2d") as CanvasRenderingContext2D;
 
     this.attachScrollListener();
-    this.render(); // Initial render
   }
 
   private attachScrollListener(): void {
@@ -35,8 +36,11 @@ export class ExcelRenderer {
     const scrollTop = this.scrollContainer.scrollTop;
     const scrollLeft = this.scrollContainer.scrollLeft;
 
-    this.startRow = Math.floor(scrollTop / rowObj.cellHeight);
-    this.startCol = Math.floor(scrollLeft / colObj.cellWidth);
+    this.startRow = rowData.findRowByPixelY(scrollTop, rowData);
+    this.startCol = colData.findColByPixelX(scrollLeft, colData);
+    
+    console.log(rowData.findRowByPixelY(scrollTop, rowData));
+
 
     const canvasTop = this.startRow * rowObj.cellHeight;
     const canvasLeft = this.startCol * colObj.cellWidth;
@@ -52,8 +56,10 @@ export class ExcelRenderer {
     const grid = document.querySelector(".main-canvas") as HTMLElement;
     grid.style.top = `${canvasTop + 24}px`;
     grid.style.left = `${canvasLeft + 50}px`;
+
     rowObj.drawRows(this.rowCtx, this.startRow);
     colObj.drawColumns(this.colCtx, this.startCol);
     gridObj.drawGrid(this.gridCtx, this.startRow, this.startCol);
+    console.log()
   }
 }

@@ -1,4 +1,6 @@
 import { cellData } from "../DataStructures/CellData.js";
+import { colData } from "../DataStructures/ColData.js";
+import { rowData } from "../DataStructures/RowData.js";
 
 export class GridCanvas {
   canvas: HTMLCanvasElement;
@@ -50,24 +52,26 @@ setCanvasSize(ctx: CanvasRenderingContext2D) {
 
     for (let col = startCol; col <= this.totalCols + startCol; col++) {
 
+      let currCol = colData.get(col);
       ctx.beginPath();
       ctx.moveTo(x, 0);
       ctx.lineTo(x, this.canvas.height);
       ctx.strokeStyle = "#ddd";
       ctx.stroke();
-      x += this.cellWidth;
+      x += currCol.width;
     }
 
     // Horizontal lines
     let y = 0.5;
     for (let row = startRow; row <= this.totalRows + startRow; row++) {
+      let rowdata = rowData.get(row);
 
       ctx.beginPath();
       ctx.moveTo(0, y);
       ctx.lineTo(this.canvas.width, y);
       ctx.strokeStyle = "#ddd";
       ctx.stroke();
-      y += this.cellHeight;
+      y += rowdata.height;
     }
 
     ctx.font = "12px Arial";
@@ -80,7 +84,9 @@ setCanvasSize(ctx: CanvasRenderingContext2D) {
 
         if (cellData.has(rowIndex, colIndex)) {
           const text = `${cellData.get(rowIndex, colIndex)}`;
-          ctx.fillText(text, c * 100 + 5, r * 24 + 17);
+          const colSet = colData.get(colIndex-1).prefixWidth;
+          const rowSet = rowData.get(rowIndex-1).prefixHeight;
+          ctx.fillText(text, colSet - 45, rowSet - 8);
         }
       }
     }

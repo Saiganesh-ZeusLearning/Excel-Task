@@ -1,8 +1,4 @@
-interface rowMap{
-    rowIndex: number;
-    rowHeight: number;
-    isSelected: boolean;
-}
+import { rowData } from "../DataStructures/RowData.js";
 
 export class RowLabelCanvas {
   private canvas: HTMLCanvasElement;
@@ -55,8 +51,12 @@ export class RowLabelCanvas {
   drawRows(ctx: CanvasRenderingContext2D, startRow: number): void {
     ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
+    let startY = 0
+    let endY = 0;
     let y = 0.5;
     for (let row = startRow; row < this.totalRows + startRow; row++) {
+      
+      let currRowdata = rowData.get(row);
       
       // Draw horizontal line
       ctx.beginPath();
@@ -69,8 +69,11 @@ export class RowLabelCanvas {
       ctx.fillStyle = "#000";
       ctx.font = "12px sans-serif";
       ctx.textAlign = "end";
-      ctx.fillText((row + 1).toString(), 45, y + 16);
-      y += this.cellHeight;
+      startY = y;
+      endY = y + currRowdata.height;
+      const middleY = (startY + endY) / 2 + 4;
+      ctx.fillText((row + 1).toString(), 45, middleY );
+      y += currRowdata.height;
     }
 
     this.drawHeaderBorders(ctx);
