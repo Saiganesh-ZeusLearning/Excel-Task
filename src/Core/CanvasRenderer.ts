@@ -1,3 +1,5 @@
+import { colData } from "../DataStructures/ColData.js";
+import { rowData } from "../DataStructures/RowData.js";
 import { colObj } from "../Elements/ColumnLabelCanvas.js";
 import { rowObj } from "../Elements/RowLabelCanvas.js";
 import { gridObj } from "./Grid.js";
@@ -34,12 +36,37 @@ export class ExcelRenderer {
   public render(): void {
     const scrollTop = this.scrollContainer.scrollTop;
     const scrollLeft = this.scrollContainer.scrollLeft;
+    let virtualStartRow = 0;
+    let accumulated = 0;
 
-    this.startRow = Math.floor(scrollTop / rowObj.cellHeight);
-    this.startCol = Math.floor(scrollLeft / colObj.cellWidth);
+    while (accumulated < scrollTop) {
+      const height = rowData.get(virtualStartRow)?.height ?? rowObj.cellHeight;
+      if (accumulated + height > scrollTop) break;
+      accumulated += height;
+      virtualStartRow++;
+    }
+    this.startRow = virtualStartRow;
+    let canvasTop = 0;
+    for (let i = 0; i < this.startRow; i++) {
+      canvasTop += rowData.get(i)?.height ?? rowObj.cellHeight;
+    }
 
-    const canvasTop = this.startRow * rowObj.cellHeight;
-    const canvasLeft = this.startCol * colObj.cellWidth;
+    let virtualStartCol = 0;
+    let accumulatedLeft = 0;
+
+    while (accumulatedLeft < scrollLeft) {
+      const width = colData.get(virtualStartCol)?.width ?? colObj.cellWidth;
+      if (accumulatedLeft + width > scrollLeft) break;
+      accumulatedLeft += width;
+      virtualStartCol++;
+    }
+    this.startCol = virtualStartCol;
+
+    let canvasLeft = 0;
+    for (let i = 0; i < this.startCol; i++) {
+      canvasLeft += colData.get(i)?.width ?? colObj.cellWidth;
+    }
+
 
     const rowLabel = document.querySelector(".row-label") as HTMLElement;
     rowLabel.style.top = `${canvasTop + 24}px`;
@@ -52,7 +79,8 @@ export class ExcelRenderer {
     const grid = document.querySelector(".main-canvas") as HTMLElement;
     grid.style.top = `${canvasTop + 24}px`;
     grid.style.left = `${canvasLeft + 50}px`;
-    console.log("asdas")
+
+    
     rowObj.drawRows(this.rowCtx, this.startRow);
     colObj.drawColumns(this.colCtx, this.startCol);
     gridObj.drawGrid(this.gridCtx, this.startRow, this.startCol);

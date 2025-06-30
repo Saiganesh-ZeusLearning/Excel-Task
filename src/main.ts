@@ -2,4 +2,4 @@ import { ExcelRenderer } from "./Core/CanvasRenderer.js";
 import { InputManager } from "./Elements/InputSelection.js";
 
 export const excelRenderer = new ExcelRenderer();
-new InputManager();
+export const inputManager = new InputManager();
