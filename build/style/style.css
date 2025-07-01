@@ -55,9 +55,9 @@ body {
   left: 0px;
   z-index: 21;
   height: 23px;
-  width: 48px;
-  border-bottom: solid 2px grey;
-  border-right: solid 2px grey;
+  width: 49px;
+  border-bottom: solid 2px #BDBDBD;
+  border-right: solid 2px #BDBDBD;
   background-color: rgb(255, 253, 253);
 }
 
