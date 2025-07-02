@@ -1,5 +1,6 @@
 import { ColData, colData } from "../DataStructures/ColData.js";
 import { RowData } from "../DataStructures/RowData.js";
+import { selectionManager } from "../Interaction/SelectionManager.js";
 import { excelRenderer, inputManager } from "../main.js";
 
 /**
@@ -24,14 +25,14 @@ export class ColumnLabelCanvas {
   /** @type {number} Total number of columns to render */
   private totalCols = 20;
 
-  /** @type {number} Horizontal header offset */
-  private headerWidth = 0;
-
-  /** @type {number} Vertical header height */
-  private headerHeight = 24;
-
   /** @type {number} Total canvas width based on totalCols and cellWidth */
   private width = this.totalCols * this.cellWidth + 1;
+
+  public isMultipleColSelection: boolean = false;
+
+  public ColSelectionStart: number = -1;
+
+  public ColSelectionEnd: number = -1;
 
   /** @type {boolean} Whether column resizing is in progress */
   private isResizing = false;
@@ -63,8 +64,8 @@ export class ColumnLabelCanvas {
     this.drawColumns(ctx, colId);
 
     // Attach event listeners
-    this.canvas.addEventListener("mousedown", this.handleMouseDown.bind(this));
-    this.canvas.addEventListener("click", this.handleClickEvent.bind(this));
+    this.canvas.addEventListener("mousedown", this.handleMouseDownResizing.bind(this));
+    this.canvas.addEventListener("mousedown", this.handleMouseDownSelection.bind(this));
     window.addEventListener("mousemove", this.handleMouseMove.bind(this));
     window.addEventListener("mouseup", this.handleMouseUp.bind(this));
   }
@@ -124,8 +125,21 @@ export class ColumnLabelCanvas {
       ctx.moveTo(x, 25);
       ctx.lineTo(x + nxtWidth, this.canvas.height);
 
+      const selectedCells = selectionManager.get();
+
+      let startColIndex = selectedCells.startCol;
+      let endColIndex = selectedCells.endCol;
+      let selectionState = selectedCells.selectionState;
+
+      if (startColIndex > endColIndex) {
+        [startColIndex, endColIndex] = [endColIndex, startColIndex]
+      }
+
+      let startMin = Math.min(this.ColSelectionStart, this.ColSelectionEnd);
+      let startMax = Math.max(this.ColSelectionStart, this.ColSelectionEnd);
+
       // Highlight logic
-      if (ColData.getSelectedCol() === col) {
+      if (this.isMultipleColSelection && ColData.getSelectedCol() === col || startMin <= col && startMax >= col) {
         ctx.fillStyle = "#107C41";
         ctx.fillRect(x, 0, nxtWidth, 24);
         ctx.fillStyle = "white";
@@ -134,7 +148,7 @@ export class ColumnLabelCanvas {
         // Draw horizontal line
         ctx.lineWidth = 1.5;
         ctx.strokeStyle = "green";
-      } else if (ColData.getSelectedCellCol() === col || RowData.getSelectedRow()) {
+      } else if ((ColData.getSelectedCellCol() === col || RowData.getSelectedRow()) || (selectionState && startColIndex <= col && endColIndex >= col)) {
         ctx.fillStyle = "#CAEAD8";
         ctx.fillRect(x, 0, nxtWidth, 24);
         ctx.fillStyle = "green";
@@ -176,9 +190,9 @@ export class ColumnLabelCanvas {
    * Handles column click event to select column.
    * @param {MouseEvent} e - Mouse click event.
    */
-  private handleClickEvent(e: MouseEvent) {
+  private handleMouseDownSelection(e: MouseEvent) {
+    e.preventDefault();
     if (this.skipClick) return;
-
     let x = 0.5;
     let offsetX = e.offsetX;
 
@@ -187,10 +201,14 @@ export class ColumnLabelCanvas {
       const width = colData.get(col)?.width ?? this.cellWidth;
 
       if (offsetX >= x + 4 && offsetX <= x + width) {
-        ColData.setSelectedCol(col);
+        // ColData.setSelectedCol(col);
         RowData.setSelectedRow(null);
         RowData.setSelectedCellRow(null);
         ColData.setSelectedCellCol(null);
+        this.ColSelectionStart = selectionManager.get().currCol;
+        this.ColSelectionEnd = selectionManager.get().currCol;
+        this.isMultipleColSelection = true;
+        selectionManager.set(-1, -1, -1, -1, false);
         excelRenderer.render();
         return;
       }
@@ -202,10 +220,13 @@ export class ColumnLabelCanvas {
    * Handles mouse down event to initiate column resizing.
    * @param {MouseEvent} e - Mouse down event.
    */
-  private handleMouseDown(e: MouseEvent) {
+  private handleMouseDownResizing(e: MouseEvent) {
     const offsetX = e.offsetX;
     let x = 0;
+
     this.skipClick = false;
+
+    selectionManager.set(-1, -1, -1, -1, false);
 
     for (let i = 0; i < this.totalCols; i++) {
       const col = this.startCol + i;
@@ -221,6 +242,8 @@ export class ColumnLabelCanvas {
       x += width;
     }
     inputManager.inputDiv.style.display = "none";
+    RowData.setSelectedCellRow(null);
+    ColData.setSelectedCellCol(null);
   }
 
   /**
@@ -237,23 +260,31 @@ export class ColumnLabelCanvas {
       const width = colData.get(col)?.width ?? this.cellWidth;
 
       if (Math.abs(offsetX - (x + width)) <= 4) {
-        this.canvas.style.cursor = "col-resize";
+        this.canvas.style.cursor = "w-resize";
         found = true;
         break;
       }
       x += width;
     }
 
+    
+    if (this.isMultipleColSelection) {
+      this.ColSelectionEnd = selectionManager.get().currCol;
+      excelRenderer.render();
+    }
+
     if (!found && !this.isResizing) {
-      this.canvas.style.cursor = "default";
+      this.canvas.style.cursor = "url('../../build/style/cursor-down.png') 12 12, auto";
     }
 
     if (this.isResizing && this.targetCol !== -1) {
       const diff = offsetX - this.resizeStartX;
       const currentWidth = colData.get(this.targetCol)?.width ?? this.cellWidth;
       const newWidth = Math.max(30, currentWidth + diff);
+      
       colData.set(this.targetCol, newWidth);
       this.resizeStartX = offsetX;
+
       excelRenderer.render();
     }
   }
@@ -263,8 +294,12 @@ export class ColumnLabelCanvas {
    */
   private handleMouseUp() {
     this.isResizing = false;
+    this.isMultipleColSelection = false;
+
+    this.ColSelectionStart = -1;
+    this.ColSelectionEnd = -1;
     this.targetCol = -1;
-    inputManager.scrollDiv.style.cursor = "default";
+    inputManager.scrollDiv.style.cursor = "cell";
   }
 }
 

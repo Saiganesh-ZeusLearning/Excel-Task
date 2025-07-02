@@ -2,6 +2,7 @@ import { cellData } from "../DataStructures/CellData.js";
 import { ColData, colData } from "../DataStructures/ColData.js";
 import { RowData, rowData } from "../DataStructures/RowData.js";
 import { excelRenderer } from "../main.js";
+import { selectionManager } from "./SelectionManager.js";
 
 /**
  * Manages input editing within the grid cells.
@@ -28,12 +29,15 @@ export class InputManager {
 
   /** Previously selected column index */
   private prevCol: number = 0;
-  
+
   /** Default Row Height */
   private defaultRowHeight = 24;
-  
+
   /** Default Width Height */
   private defaultColWidth = 100;
+
+  public width;
+  public height;
 
 
   /**
@@ -43,6 +47,8 @@ export class InputManager {
     this.scrollDiv = document.querySelector(".scrollable") as HTMLElement;
     this.mainCanvas = document.querySelector(".main-canvas") as HTMLElement;
     this.inputDiv = document.querySelector(".input-selection") as HTMLInputElement;
+    this.width = window.innerWidth;
+    this.height = window.innerHeight;
 
     this.attachListeners();
   }
@@ -51,8 +57,13 @@ export class InputManager {
    * Attaches listeners for clicks and keyboard navigation.
    */
   private attachListeners() {
-    // this.mainCanvas.addEventListener("mousedown", this.handleClickEvent.bind(this));
-    // this.inputDiv.addEventListener("keydown", this.handleKeyDown.bind(this));
+    this.mainCanvas.addEventListener("mousedown", this.handleClickEvent.bind(this));
+    this.inputDiv.addEventListener("keydown", this.handleKeyDown.bind(this));
+    window.addEventListener('resize', () => {
+      this.width = window.innerWidth;
+      this.height = window.innerHeight;
+      console.log(window.innerWidth, window.innerHeight);
+    });
   }
 
   /**
@@ -60,7 +71,11 @@ export class InputManager {
    * Calculates row/col, positions input box, and handles data loading/saving.
    * @param {MouseEvent} e - Mouse click event
    */
+
+
+
   private handleClickEvent(e: MouseEvent) {
+    e.preventDefault();
     const scrollLeft = this.scrollDiv.scrollLeft;
     const scrollTop = this.scrollDiv.scrollTop;
 
@@ -70,16 +85,16 @@ export class InputManager {
     RowData.setSelectedRow(null);
     ColData.setSelectedCol(null);
 
-    if (clientX <= 0 || clientY <= 0) return;
-
     // === Calculate Column ===
-    let x = 0, col = 0;
+    let x = 0, col = 0; 
+    let colWidth: number = 0;
     while (x <= clientX) {
-      const colWidth = colData.get(col)?.width ?? this.defaultColWidth;
+      colWidth = colData.get(col)?.width ?? this.defaultColWidth;
       if (x + colWidth > clientX) break;
       x += colWidth;
       col++;
     }
+
 
     // === Calculate Row ===
     let y = 0, row = 0;
@@ -93,6 +108,8 @@ export class InputManager {
     // Set selected cell
     RowData.setSelectedCellRow(row);
     ColData.setSelectedCellCol(col);
+
+    selectionManager.set(row, col, row, col, true)
 
     const cellTop = y + 25;   // + row label height
     const cellLeft = x + 50;  // + col label width
@@ -108,8 +125,6 @@ export class InputManager {
         this.inputDiv.value = cellData.get(row + 1, col + 1) || "";
       }
 
-      excelRenderer.render();
-
       this.prevRow = row;
       this.prevCol = col;
       this.prevTop = cellTop;
@@ -118,11 +133,15 @@ export class InputManager {
 
     // Show and position input box
     this.inputDiv.style.display = "block";
+    this.inputDiv.style.caretColor = "transparent";
+
     this.inputDiv.style.height = `${(rowData.get(row)?.height ?? 24) - 6}px`;
     this.inputDiv.style.width = `${(colData.get(col)?.width ?? 100) - 8}px`;
     this.inputDiv.style.top = `${cellTop}px`;
     this.inputDiv.style.left = `${cellLeft}px`;
+
     this.inputDiv.focus();
+    excelRenderer.render();
   }
 
   /**
@@ -142,26 +161,36 @@ export class InputManager {
       const currHeight = rowData.get(this.prevRow)?.height ?? this.defaultRowHeight;
       this.prevTop += currHeight;
       this.prevRow++;
+      this.inputDiv.style.caretColor = "transparent";
+      selectionManager.set(this.prevRow, this.prevCol, this.prevRow, this.prevCol, true)
     }
 
-    if (e.key === "ArrowUp" && this.prevRow > 0) {
+    else if (e.key === "ArrowUp" && this.prevRow > 0) {
       const aboveHeight = rowData.get(this.prevRow - 1)?.height ?? this.defaultRowHeight;
       this.inputDiv.select();
       this.prevTop -= aboveHeight;
       this.prevRow--;
+      this.inputDiv.style.caretColor = "transparent";
+      selectionManager.set(this.prevRow, this.prevCol, this.prevRow, this.prevCol, true)
     }
 
-    if (e.key === "ArrowRight") {
+    else if (e.key === "ArrowRight") {
       const currWidth = colData.get(this.prevCol)?.width ?? this.defaultColWidth;
       this.prevLeft += currWidth;
       this.prevCol++;
+      this.inputDiv.style.caretColor = "transparent";
+      selectionManager.set(this.prevRow, this.prevCol, this.prevRow, this.prevCol, true)
     }
 
-    if (e.key === "ArrowLeft" && this.prevCol > 0) {
+    else if (e.key === "ArrowLeft" && this.prevCol > 0) {
       const leftWidth = colData.get(this.prevCol - 1)?.width ?? this.defaultColWidth;
       this.inputDiv.select();
       this.prevLeft -= leftWidth;
       this.prevCol--;
+      this.inputDiv.style.caretColor = "transparent";
+      selectionManager.set(this.prevRow, this.prevCol, this.prevRow, this.prevCol, true)
+    } else {
+      this.inputDiv.style.caretColor = "black";
     }
 
     // Update selection state

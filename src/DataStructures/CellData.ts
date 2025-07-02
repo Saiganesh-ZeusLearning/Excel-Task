@@ -66,3 +66,4 @@ export const cellData = new CellData();
 
 // Example usage
 cellData.set(4, 3, "Hello");
+cellData.set(4, 2, "123");

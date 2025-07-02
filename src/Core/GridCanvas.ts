@@ -1,7 +1,9 @@
 import { cellData } from "../DataStructures/CellData.js";
 import { ColData, colData } from "../DataStructures/ColData.js";
 import { RowData, rowData } from "../DataStructures/RowData.js";
-import { SelectionManager } from "../Interaction/SelectionManager.js";
+import { colObj } from "../Elements/ColumnLabelCanvas.js";
+import { rowObj } from "../Elements/RowLabelCanvas.js";
+import { selectionManager } from "../Interaction/SelectionManager.js";
 
 /**
  * Class responsible for rendering the main grid canvas including cells, grid lines, and cell data.
@@ -28,8 +30,6 @@ export class GridCanvas {
   /** @type {HTMLElement} Wrapper element holding the canvas */
   mainCanvasWrapper: HTMLElement;
 
-  selectionManager;
-
   /**
    * Initializes the GridCanvas, creates the canvas element, and triggers initial draw.
    */
@@ -38,7 +38,6 @@ export class GridCanvas {
     this.canvas = document.createElement("canvas") as HTMLCanvasElement;
     this.canvas.classList.add("main-canvas");
     this.mainCanvasWrapper.appendChild(this.canvas);
-    this.selectionManager = new SelectionManager();
 
     const ctx = this.canvas.getContext("2d") as CanvasRenderingContext2D;
     this.height = this.cellHeight * this.totalRows;
@@ -81,14 +80,17 @@ export class GridCanvas {
       const colWidth = colData.get(col)?.width ?? this.cellWidth;
       let lineHeight = 0;
 
-      if (ColData.getSelectedCol() == col) {
+      let startMin = Math.min(colObj.ColSelectionStart, colObj.ColSelectionEnd);
+      let startMax = Math.max(colObj.ColSelectionStart, colObj.ColSelectionEnd);
+
+      if (ColData.getSelectedCol() == col || startMin == col) {
         lineHeight = 1.3;
         ctx.strokeStyle = "green";
-        ctx.lineWidth = 2.5;
-      } else if (ColData.getSelectedCol() == col - 1) {
+        ctx.lineWidth = 1.5;
+      } else if (ColData.getSelectedCol() == col - 1 || startMax == col - 1) {
         lineHeight = -1.3;
         ctx.strokeStyle = "green";
-        ctx.lineWidth = 2.5;
+        ctx.lineWidth = 1.5;
       } else {
         ctx.strokeStyle = "#ddd";
         ctx.lineWidth = 1;
@@ -114,14 +116,17 @@ export class GridCanvas {
       const rowHeight = rowData.get(row)?.height ?? this.cellHeight;
       let lineHeight = 0;
 
-      if (RowData.getSelectedRow() == row) {
+      let startMin = Math.min(rowObj.RowSelectionStart, rowObj.RowSelectionEnd);
+      let startMax = Math.max(rowObj.RowSelectionStart, rowObj.RowSelectionEnd);
+
+      if ((RowData.getSelectedRow() == row) || (startMin == row)) {
         lineHeight = 1.5;
         ctx.strokeStyle = "green";
-        ctx.lineWidth = 2.5;
-      } else if (RowData.getSelectedRow() == row - 1) {
+        ctx.lineWidth = 1.5;
+      } else if (RowData.getSelectedRow() == row - 1 || (startMax == row - 1)) {
         lineHeight = -1.5;
         ctx.strokeStyle = "green";
-        ctx.lineWidth = 2.5;
+        ctx.lineWidth = 1.5;
       } else {
         ctx.strokeStyle = "#ddd";
         ctx.lineWidth = 1;
@@ -143,6 +148,7 @@ export class GridCanvas {
    */
   drawCellData(ctx: CanvasRenderingContext2D, startRow: number, startCol: number) {
     let yPos = 0;
+
     for (let r = 0; r < this.totalRows; r++) {
       const rowIndex = startRow + r;
       const rowHeight = rowData.get(rowIndex)?.height ?? this.cellHeight;
@@ -157,10 +163,16 @@ export class GridCanvas {
           text = `${cellData.get(rowIndex + 1, colIndex + 1)}`;
           ctx.font = "12px Arial";
           ctx.fillStyle = "#000";
-          ctx.fillText(text, xPos + 5, yPos + rowHeight / 2 + 4);
+          if (isFinite(Number(text))) {
+            ctx.textAlign = "end"
+            ctx.fillText(text, xPos - 5 + colWidth, yPos + rowHeight / 2 + 4);
+          } else {
+            ctx.textAlign = "left"
+            ctx.fillText(text, xPos + 5, yPos + rowHeight / 2 + 4);
+          }
         }
-        // console.log(selectedCells.startRow + 1, selectedCells.endRow + 1, selectedCells.selectionState);
-        const selectedCells = this.selectionManager.get();
+
+        const selectedCells = selectionManager.get();
 
         let startRowIndex = selectedCells.startRow;
         let endRowIndex = selectedCells.endRow;
@@ -173,6 +185,10 @@ export class GridCanvas {
         if (startColIndex > endColIndex) {
           [startColIndex, endColIndex] = [endColIndex, startColIndex];
         }
+        let startRowMin = Math.min(rowObj.RowSelectionStart, rowObj.RowSelectionEnd);
+        let startRowMax = Math.max(rowObj.RowSelectionStart, rowObj.RowSelectionEnd);
+        let startColMin = Math.min(colObj.ColSelectionStart, colObj.ColSelectionEnd);
+        let startColMax = Math.max(colObj.ColSelectionStart, colObj.ColSelectionEnd);
         if (
           (startRowIndex <= rowIndex)
           && (endRowIndex >= rowIndex)
@@ -182,13 +198,23 @@ export class GridCanvas {
           && (endRowIndex >= rowIndex)
           && (startColIndex === colIndex)
           && selectedCells.selectionState
-          || (RowData.getSelectedRow() === rowIndex && colIndex !== 0) 
+          || (RowData.getSelectedRow() === rowIndex && colIndex !== 0)
+          || (startRowMin <= rowIndex)
+          && (startRowMax >= rowIndex)
+          || (startColMin <= colIndex)
+          && (startColMax >= colIndex)
           || (ColData.getSelectedCol() === colIndex && rowIndex !== 0)
         ) {
           ctx.fillStyle = "#E8F2EC";
           ctx.fillRect(xPos, yPos, colWidth, rowHeight);
           ctx.fillStyle = "black";
-          ctx.fillText(text || "", xPos + 5, yPos + rowHeight / 2 + 4);
+          if (isFinite(Number(text))) {
+            ctx.textAlign = "end"
+            ctx.fillText(text || "", xPos - 5 + colWidth, yPos + rowHeight / 2 + 4);
+          } else {
+            ctx.textAlign = "left"
+            ctx.fillText(text || "", xPos + 5, yPos + rowHeight / 2 + 4);
+          }
         }
         if (
           selectedCells.startRow === rowIndex
@@ -197,7 +223,13 @@ export class GridCanvas {
           ctx.fillStyle = "white";
           ctx.fillRect(xPos, yPos, colWidth, rowHeight);
           ctx.fillStyle = "black";
-          ctx.fillText(text || "", xPos + 5, yPos + rowHeight / 2 + 4);
+          if (isFinite(Number(text))) {
+            ctx.textAlign = "end"
+            ctx.fillText(text || "", xPos - 5 + colWidth, yPos + rowHeight / 2 + 4);
+          } else {
+            ctx.textAlign = "left"
+            ctx.fillText(text || "", xPos + 5, yPos + rowHeight / 2 + 4);
+          }
         }
 
         xPos += colWidth;
@@ -212,13 +244,12 @@ export class GridCanvas {
     for (let r = 0; r < 40; r++) {
       const rowIndex = startRow + r;
       const rowHeight = rowData.get(rowIndex)?.height ?? this.cellHeight;
-
       let xPos = 0;
-      for (let c = 0; c < 12; c++) {
+      for (let c = 0; c < 20; c++) {
         const colIndex = startCol + c;
         const colWidth = colData.get(colIndex)?.width ?? this.cellWidth;
 
-        const selectedCells = this.selectionManager.get();
+        const selectedCells = selectionManager.get();
         if (selectedCells.startRow > selectedCells.endRow) {
           [selectedCells.startRow, selectedCells.endRow] = [selectedCells.endRow, selectedCells.startRow]
         }
@@ -236,7 +267,7 @@ export class GridCanvas {
           ctx.moveTo(xPos, yPos);
           ctx.lineTo(xPos, yPos + rowHeight);
           ctx.lineWidth = 1.5;
-          ctx.strokeStyle = "green";
+          ctx.strokeStyle = "#137E43";
           ctx.stroke();
 
         }
@@ -251,7 +282,7 @@ export class GridCanvas {
           ctx.moveTo(xPos + colWidth, yPos);
           ctx.lineTo(xPos + colWidth, yPos + rowHeight);
           ctx.lineWidth = 1.5;
-          ctx.strokeStyle = "green";
+          ctx.strokeStyle = "#137E43";
           ctx.stroke();
         }
         if ((selectedCells.startCol <= colIndex)
@@ -265,7 +296,7 @@ export class GridCanvas {
           ctx.moveTo(xPos, yPos + rowHeight);
           ctx.lineTo(xPos + colWidth, yPos + rowHeight);
           ctx.lineWidth = 1.5;
-          ctx.strokeStyle = "green";
+          ctx.strokeStyle = "#137E43";
           ctx.stroke();
         }
         if ((selectedCells.startCol <= colIndex)
@@ -278,7 +309,7 @@ export class GridCanvas {
           ctx.moveTo(xPos, yPos);
           ctx.lineTo(xPos + colWidth, yPos);
           ctx.lineWidth = 1.5;
-          ctx.strokeStyle = "green";
+          ctx.strokeStyle = "#137E43";
           ctx.stroke();
         }
 

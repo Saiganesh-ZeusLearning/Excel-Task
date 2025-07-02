@@ -49,7 +49,7 @@ export class SelectionManager {
      */
     constructor() {
         this.scrollDiv = document.querySelector(".scrollable") as HTMLElement;
-        this.mainCanvas = document.querySelector(".main-canvas") as HTMLElement;
+        this.mainCanvas = document.querySelector(".main-canvas-wrapper") as HTMLElement;
 
         this.attachListeners();
     }
@@ -60,6 +60,8 @@ export class SelectionManager {
             startCol: this.startCol,
             endRow: this.endRow,
             endCol: this.endCol,
+            currRow: this.currRow, 
+            currCol: this.currCol, 
             selectionState : this.selectionState
         }
     }
@@ -72,13 +74,14 @@ export class SelectionManager {
         this.selectionState = selectionState;
     }
 
+
     /**
      * Attaches listeners for clicks and keyboard navigation.
      */
     private attachListeners() {
         this.mainCanvas.addEventListener("mousedown", this.handleMouseDown.bind(this));
-        this.mainCanvas.addEventListener("mousemove", this.handleMouseMove.bind(this));
-        this.mainCanvas.addEventListener("mouseup", this.handleMouseUp.bind(this));
+        window.addEventListener("mousemove", this.handleMouseMove.bind(this));
+        window.addEventListener("mouseup", this.handleMouseUp.bind(this));
     }
 
     private handleMouseDown() {
@@ -113,7 +116,7 @@ export class SelectionManager {
             x += colWidth;
             col++;
         }
-
+        
         // === Calculate Row ===
         let y = 0, row = 0;
         while (y <= clientY) {
@@ -122,7 +125,6 @@ export class SelectionManager {
             y += rowHeight;
             row++;
         }
-
 
         this.currRow = row;
         this.currCol = col;
@@ -135,9 +137,9 @@ export class SelectionManager {
         // Set selected cell
         RowData.setSelectedCellRow(row);
         ColData.setSelectedCellCol(col);
-
         excelRenderer.render();
     }
 }
 
 
+export const selectionManager = new SelectionManager();

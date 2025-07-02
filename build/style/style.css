@@ -42,6 +42,7 @@ body {
   top: 24px;
   left: 50px;
   z-index: 5;
+  cursor: cell;
 }
 
 #fakeContent {
@@ -62,16 +63,16 @@ body {
 }
 
 .input-selection {
+  display: none;
   position: absolute;
   width: 92px;
   height: 18px;
   border-radius: 0;
-  border: 2px solid #168045;
+  border: none;
   z-index: 6;
   font-size: 12px;
   font-family: Arial, Helvetica, sans-serif;
   margin-left: 1px;
-  caret-color: transparent;
 }
 
 input:focus {
