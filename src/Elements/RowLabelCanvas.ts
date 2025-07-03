@@ -1,3 +1,4 @@
+import { cellData } from "../DataStructures/CellData.js";
 import { ColData } from "../DataStructures/ColData.js";
 import { RowData, rowData } from "../DataStructures/RowData.js";
 import { selectionManager } from "../Interaction/SelectionManager.js";
@@ -28,9 +29,9 @@ export class RowLabelCanvas {
 
   public isMultipleRowSelection: boolean = false;
 
-  public RowSelectionStart: number = -1;
+  public RowSelectionStart: number = -100;
 
-  public RowSelectionEnd: number = -1;
+  public RowSelectionEnd: number = -100;
 
   /** Total canvas height (for all rows) */
   public height = this.totalRows * this.cellHeight;
@@ -55,14 +56,16 @@ export class RowLabelCanvas {
     const ctx = this.canvas.getContext("2d") as CanvasRenderingContext2D;
     this.startRow = 0;
 
-    this.initCanvas(ctx);
-    this.drawRows(ctx, rowId);
-
+    
     // === Events ===
     this.canvas.addEventListener("mousedown", this.handleMouseDownResize.bind(this));
     this.canvas.addEventListener("mousedown", this.handleMouseDownEventSelection.bind(this));
     window.addEventListener("mousemove", this.handleMouseMove.bind(this));
     window.addEventListener("mouseup", this.handleMouseUp.bind(this));
+
+
+    this.initCanvas(ctx);
+    this.drawRows(ctx, rowId);
   }
 
   /**
@@ -101,10 +104,10 @@ export class RowLabelCanvas {
 
       // Vertical separator line
       ctx.beginPath();
-      ctx.moveTo(50, y);
-      ctx.lineTo(this.canvas.width, y + nxtHeight);
+      ctx.moveTo(this.canvas.width, y - 1);
+      ctx.lineTo(this.canvas.width, y + nxtHeight + 1);
 
-      const selectedCells = selectionManager.get();
+      const selectedCells = selectionManager.cellSelection;
       let startRowIndex = selectedCells.startRow;
       let endRowIndex = selectedCells.endRow;
       let selectionState = selectedCells.selectionState;
@@ -112,11 +115,12 @@ export class RowLabelCanvas {
       if ((startRowIndex > endRowIndex)) {
         [startRowIndex, endRowIndex] = [endRowIndex, startRowIndex]
       }
-      
+
       let startMin = Math.min(this.RowSelectionEnd, this.RowSelectionStart);
-      let startMax = Math.max(this.RowSelectionEnd,this.RowSelectionStart);
+      let startMax = Math.max(this.RowSelectionEnd, this.RowSelectionStart);
       // === Row Number Label Highlight ===
-      if (this.isMultipleRowSelection && ((RowData.getSelectedRow() == row) || startMin <= row && startMax >= row)) {
+      if (((RowData.getSelectedRow() == row) || startMin <= row && startMax >= row)) {
+        console.log(RowData.getSelectedRow())
         ctx.fillStyle = "#107C41";
         ctx.fillRect(0, y, 100, nxtHeight);
         ctx.fillStyle = "white";
@@ -125,6 +129,16 @@ export class RowLabelCanvas {
         // Vertical separator line
         ctx.lineWidth = 1;
         ctx.strokeStyle = "green";
+        ctx.stroke();
+        ctx.strokeStyle = "#A0D8B9";
+
+        // Horizontal separator line
+        ctx.beginPath();
+        ctx.moveTo(-2, y);
+        ctx.lineWidth = 1;
+        ctx.lineTo(this.canvas.width - 2, y);
+        ctx.stroke();
+
       } else if ((RowData.getSelectedCellRow() == row || ColData.getSelectedCol()) || (selectionState && startRowIndex <= row && endRowIndex >= row)) {
         ctx.fillStyle = "#CAEAD8";
         ctx.fillRect(0, y, 100, nxtHeight);
@@ -134,6 +148,15 @@ export class RowLabelCanvas {
         // Vertical separator line
         ctx.lineWidth = 4;
         ctx.strokeStyle = "green";
+        ctx.stroke();
+        ctx.strokeStyle = "#A0D8B9";
+
+        // Horizontal separator line
+        ctx.beginPath();
+        ctx.moveTo(-2, y);
+        ctx.lineWidth = 1;
+        ctx.lineTo(this.canvas.width - 2, y);
+        ctx.stroke();
       } else {
         ctx.fillStyle = "#F5F5F5";
         ctx.fillRect(0, y, 100, nxtHeight);
@@ -141,12 +164,21 @@ export class RowLabelCanvas {
         ctx.fillStyle = "#000";
         ctx.font = "12px sans-serif";
 
+        if (endRowIndex == row - 1) {
+          ctx.strokeStyle = "#A0D8B9";
+        } else {
+          ctx.strokeStyle = "#ddd";
+        }
         // Vertical separator line
         ctx.lineWidth = 1;
-        ctx.strokeStyle = "#ddd";
-      }
-      ctx.stroke();
 
+        // Horizontal separator line
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineWidth = 1;
+        ctx.lineTo(this.canvas.width, y);
+        ctx.stroke();
+      }
 
       // Draw row label text
       ctx.textAlign = "end";
@@ -154,13 +186,6 @@ export class RowLabelCanvas {
       let rowEnd = y + nxtHeight;
       ctx.fillText((row + 1).toString(), 45, (rowStart + rowEnd) / 2 + 4);
 
-      // Horizontal separator line
-      ctx.beginPath();
-      ctx.moveTo(0, y);
-      ctx.lineWidth = 1;
-      ctx.lineTo(this.canvas.width, y);
-      ctx.strokeStyle = "#ddd";
-      ctx.stroke();
       y += nxtHeight;
     }
   }
@@ -185,10 +210,10 @@ export class RowLabelCanvas {
         ColData.setSelectedCol(null);
         RowData.setSelectedCellRow(null);
         ColData.setSelectedCellCol(null);
-        this.RowSelectionStart = selectionManager.get().currRow;
-        this.RowSelectionEnd = selectionManager.get().currRow;
+        this.RowSelectionStart = selectionManager.cellSelection.currRow;
+        this.RowSelectionEnd = selectionManager.cellSelection.currRow;
         this.isMultipleRowSelection = true;
-        selectionManager.set(-1, -1, -1, -1, false);
+        selectionManager.set(-100, -100, -100, -100, false);
         excelRenderer.render();
         return;
       }
@@ -203,21 +228,29 @@ export class RowLabelCanvas {
    */
   private handleMouseDownResize(e: MouseEvent) {
     const offsetY = e.offsetY;
+    const offsetX = e.offsetX;
     let y = 0;
 
     this.skipClick = false;
 
-    selectionManager.set(-1, -1, -1, -1, false);
+    selectionManager.set(-100, -100, -100, -100, false);
 
     for (let i = 0; i < this.totalRows; i++) {
       const row = this.startRow + i;
       const height = rowData.get(row)?.height ?? this.cellHeight;
 
-      if (Math.abs(offsetY - (y + height)) <= 4) {
+      if (Math.abs(offsetY - (y + height)) <= 4 && offsetX > 20) {
         this.isResizing = true;
         this.resizeStartY = offsetY;
         this.targetRow = row;
         this.skipClick = true;
+        break;
+      }
+      if (Math.abs(offsetY - (y + height)) <= 4 && offsetX < 20) {
+        this.skipClick = true;
+        cellData.insertRowAt(row+2);
+        RowData.setSelectedRow(row+1);
+        excelRenderer.render();
         break;
       }
 
@@ -235,29 +268,38 @@ export class RowLabelCanvas {
    */
   private handleMouseMove(e: MouseEvent) {
     const offsetY = e.offsetY;
+    const offsetX = e.offsetX;
     let y = 0.5;
     let found = false;
+    let isRowAdd = false;
 
     for (let i = 0; i < this.totalRows; i++) {
       const row = this.startRow + i;
       const height = rowData.get(row)?.height ?? this.cellHeight;
 
-      if (Math.abs(offsetY - (y + height)) <= 4) {
+      if (Math.abs(offsetY - (y + height)) <= 4 && offsetX > 20) {
         this.canvas.style.cursor = "s-resize";
         found = true;
         break;
       }
+      if (Math.abs(offsetY - (y + height)) <= 4 && offsetX < 20) {
+        this.canvas.style.cursor = "copy";
+        isRowAdd = true;
+        break;
+      }
+
       y += height;
     }
 
     if (this.isMultipleRowSelection) {
-      this.RowSelectionEnd = selectionManager.get().currRow;
+      this.RowSelectionEnd = selectionManager.cellSelection.currRow;
       excelRenderer.render();
     }
 
-    if (!found && !this.isResizing) {
+    if (!found && !this.isResizing && !isRowAdd) {
       this.canvas.style.cursor = "url('../../build/style/cursor-right.png') 12 12, auto";
     }
+
 
     // === Resize logic ===
     if (this.isResizing && this.targetRow !== -1) {
@@ -278,8 +320,8 @@ export class RowLabelCanvas {
   private handleMouseUp() {
     this.isResizing = false;
     this.isMultipleRowSelection = false;
-    this.RowSelectionStart = -1;
-    this.RowSelectionEnd = -1;
+    this.RowSelectionStart = -100;
+    this.RowSelectionEnd = -100;
     this.targetRow = -1;
   }
 }

@@ -1,5 +1,5 @@
 import { colData } from "../DataStructures/ColData.js";
-import { rowData } from "../DataStructures/RowData.js";
+import { RowData, rowData } from "../DataStructures/RowData.js";
 import { colObj } from "../Elements/ColumnLabelCanvas.js";
 import { rowObj } from "../Elements/RowLabelCanvas.js";
 import { gridObj } from "./GridCanvas.js";
@@ -107,6 +107,7 @@ export class ExcelRenderer {
     grid.style.top = `${canvasTop + 24}px`;
     grid.style.left = `${canvasLeft + 50}px`;
 
+    
     // Draw visible parts
     rowObj.drawRows(this.rowCtx, this.startRow);
     colObj.drawColumns(this.colCtx, this.startCol);

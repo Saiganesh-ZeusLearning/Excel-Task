@@ -39,6 +39,10 @@ export class InputManager {
   public width;
   public height;
 
+  public shiftRow;
+
+  public shiftCol;
+
 
   /**
    * Initializes input manager and attaches event listeners.
@@ -49,6 +53,8 @@ export class InputManager {
     this.inputDiv = document.querySelector(".input-selection") as HTMLInputElement;
     this.width = window.innerWidth;
     this.height = window.innerHeight;
+    this.shiftRow = 0;
+    this.shiftCol = 0;
 
     this.attachListeners();
   }
@@ -62,7 +68,6 @@ export class InputManager {
     window.addEventListener('resize', () => {
       this.width = window.innerWidth;
       this.height = window.innerHeight;
-      console.log(window.innerWidth, window.innerHeight);
     });
   }
 
@@ -86,7 +91,7 @@ export class InputManager {
     ColData.setSelectedCol(null);
 
     // === Calculate Column ===
-    let x = 0, col = 0; 
+    let x = 0, col = 0;
     let colWidth: number = 0;
     while (x <= clientX) {
       colWidth = colData.get(col)?.width ?? this.defaultColWidth;
@@ -140,6 +145,8 @@ export class InputManager {
     this.inputDiv.style.top = `${cellTop}px`;
     this.inputDiv.style.left = `${cellLeft}px`;
 
+    this.shiftRow = 0;
+    this.shiftCol = 0;
     this.inputDiv.focus();
     excelRenderer.render();
   }
@@ -150,44 +157,66 @@ export class InputManager {
    * @param {KeyboardEvent} e - Keydown event
    */
   private handleKeyDown(e: KeyboardEvent) {
-
     // Save current cell data
     if (this.inputDiv.value !== "") {
       cellData.set(this.prevRow + 1, this.prevCol + 1, this.inputDiv.value);
     }
 
+
+
     // === Move selection based on key ===
-    if (e.key === "Enter" || e.key === "ArrowDown") {
+
+    if (e.shiftKey && e.key === 'ArrowDown') {
+      selectionManager.set(this.prevRow, this.prevCol, this.prevRow + ++this.shiftRow, this.prevCol + this.shiftCol, true)
+    } else if (e.shiftKey && e.key === 'ArrowUp') {
+      selectionManager.set(this.prevRow, this.prevCol, this.prevRow + --this.shiftRow, this.prevCol + this.shiftCol, true)
+    } else if (e.shiftKey && e.key === 'ArrowRight') {
+      selectionManager.set(this.prevRow, this.prevCol, this.prevRow + this.shiftRow, this.prevCol + ++this.shiftCol, true)
+    } else if (e.shiftKey && e.key === 'ArrowLeft') {
+      selectionManager.set(this.prevRow, this.prevCol, this.prevRow + this.shiftRow, this.prevCol + --this.shiftCol, true)
+    }
+
+
+
+
+    if (e.key === "Enter" || e.key === "ArrowDown" && !e.shiftKey) {
       const currHeight = rowData.get(this.prevRow)?.height ?? this.defaultRowHeight;
       this.prevTop += currHeight;
       this.prevRow++;
       this.inputDiv.style.caretColor = "transparent";
+      this.shiftRow = 0;
+      this.shiftCol = 0;
       selectionManager.set(this.prevRow, this.prevCol, this.prevRow, this.prevCol, true)
     }
-
-    else if (e.key === "ArrowUp" && this.prevRow > 0) {
+    else if (e.key === "ArrowUp" && this.prevRow > 0 && !e.shiftKey) {
       const aboveHeight = rowData.get(this.prevRow - 1)?.height ?? this.defaultRowHeight;
       this.inputDiv.select();
       this.prevTop -= aboveHeight;
       this.prevRow--;
       this.inputDiv.style.caretColor = "transparent";
+      this.shiftRow = 0;
+      this.shiftCol = 0;
       selectionManager.set(this.prevRow, this.prevCol, this.prevRow, this.prevCol, true)
     }
 
-    else if (e.key === "ArrowRight") {
+    else if (e.key === "ArrowRight" && !e.shiftKey) {
       const currWidth = colData.get(this.prevCol)?.width ?? this.defaultColWidth;
       this.prevLeft += currWidth;
       this.prevCol++;
       this.inputDiv.style.caretColor = "transparent";
+      this.shiftRow = 0;
+      this.shiftCol = 0;
       selectionManager.set(this.prevRow, this.prevCol, this.prevRow, this.prevCol, true)
     }
 
-    else if (e.key === "ArrowLeft" && this.prevCol > 0) {
+    else if (e.key === "ArrowLeft" && this.prevCol > 0 && !e.shiftKey) {
       const leftWidth = colData.get(this.prevCol - 1)?.width ?? this.defaultColWidth;
       this.inputDiv.select();
       this.prevLeft -= leftWidth;
       this.prevCol--;
       this.inputDiv.style.caretColor = "transparent";
+      this.shiftRow = 0;
+      this.shiftCol = 0;
       selectionManager.set(this.prevRow, this.prevCol, this.prevRow, this.prevCol, true)
     } else {
       this.inputDiv.style.caretColor = "black";
@@ -196,6 +225,23 @@ export class InputManager {
     // Update selection state
     RowData.setSelectedCellRow(this.prevRow);
     ColData.setSelectedCellCol(this.prevCol);
+
+    let leftWidth = this.prevLeft + (colData.get(this.prevCol)?.width ?? this.defaultColWidth);
+
+
+    if (leftWidth > this.width + this.scrollDiv.scrollLeft) {
+      this.scrollDiv.scrollLeft += colData.get(this.prevCol)?.width ?? this.defaultColWidth;
+    } else if (this.prevLeft < this.scrollDiv.scrollLeft) {
+      this.scrollDiv.scrollLeft -= colData.get(this.prevCol)?.width ?? this.defaultColWidth;
+    }
+
+    let topHeight = this.prevTop + (rowData.get(this.prevRow)?.height ?? this.defaultRowHeight);
+
+    if (topHeight > this.height - 10 + this.scrollDiv.scrollTop) {
+      this.scrollDiv.scrollTop += rowData.get(this.prevRow)?.height ?? this.defaultRowHeight;
+    } else if (this.prevTop < this.scrollDiv.scrollTop + 20) {
+      this.scrollDiv.scrollTop -= rowData.get(this.prevRow)?.height ?? this.defaultRowHeight;
+    }
 
     // Load value into input
     const nextVal = cellData.get(this.prevRow + 1, this.prevCol + 1);

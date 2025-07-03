@@ -29,14 +29,14 @@ export class AutoScroller {
       const rect = this.scrollableDiv.getBoundingClientRect();
       let dx = 0, dy = 0;
 
-      if (this.pointerY > rect.bottom - 30) {
-        dy = this.calculateSpeed(this.pointerY - rect.bottom + 30);
+      if (this.pointerY > rect.bottom) {
+        dy = this.calculateSpeed(this.pointerY - rect.bottom);
       } else if (this.pointerY < rect.top) {
         dy = -this.calculateSpeed(rect.top - this.pointerY);
       }
 
-      if (this.pointerX > rect.right - 40) {
-        dx = this.calculateSpeed(this.pointerX - rect.right + 40);
+      if (this.pointerX > rect.right) {
+        dx = this.calculateSpeed(this.pointerX - rect.right);
       } else if (this.pointerX < rect.left) {
         dx = -this.calculateSpeed(rect.left - this.pointerX);
       }

@@ -16,22 +16,22 @@ export class SelectionManager {
 
 
     /** Starting of selected row index */
-    private startRow: number = 0;
+    private startRow: number = -100;
 
     /** Starting of selected column index */
-    private startCol: number = 0;
+    private startCol: number = -100;
 
     /** Ending of selected row index */
-    private endRow: number = 0;
+    private endRow: number = -100;
 
     /** Ending of selected column index */
-    private endCol: number = 0;
+    private endCol: number = -100;
 
     /** Ending of selected row index */
-    private currRow: number = 0;
+    private currRow: number = -100;
 
     /** Ending of selected column index */
-    private currCol: number = 0;
+    private currCol: number = -100;
 
     private selectionState: boolean = false;
 
@@ -54,7 +54,7 @@ export class SelectionManager {
         this.attachListeners();
     }
 
-    get() {
+    get cellSelection() {
         return {
             startRow: this.startRow,
             startCol: this.startCol,
@@ -84,7 +84,9 @@ export class SelectionManager {
         window.addEventListener("mouseup", this.handleMouseUp.bind(this));
     }
 
-    private handleMouseDown() {
+    private handleMouseDown(e: MouseEvent) {
+        if (e.button !== 0) return; 
+        
         this.selectingMultipleCells = true;
 
         this.startRow = this.currRow;
@@ -133,7 +135,6 @@ export class SelectionManager {
 
         this.endRow = this.currRow;
         this.endCol = this.currCol;
-        // console.log(this.endRow, this.endCol);
         // Set selected cell
         RowData.setSelectedCellRow(row);
         ColData.setSelectedCellCol(col);
@@ -143,3 +144,5 @@ export class SelectionManager {
 
 
 export const selectionManager = new SelectionManager();
+
+// selectionManager.set(5, 2, 2, 5, true);

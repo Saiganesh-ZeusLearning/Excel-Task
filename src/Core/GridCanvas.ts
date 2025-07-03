@@ -76,7 +76,7 @@ export class GridCanvas {
    */
   drawVerticalGridLines(ctx: CanvasRenderingContext2D, startCol: number) {
     let x = 0.5;
-    for (let col = startCol; col <= startCol + this.totalCols; col++) {
+    for (let col = startCol; col < startCol + this.totalCols; col++) {
       const colWidth = colData.get(col)?.width ?? this.cellWidth;
       let lineHeight = 0;
 
@@ -86,11 +86,11 @@ export class GridCanvas {
       if (ColData.getSelectedCol() == col || startMin == col) {
         lineHeight = 1.3;
         ctx.strokeStyle = "green";
-        ctx.lineWidth = 1.5;
+        ctx.lineWidth = 2;
       } else if (ColData.getSelectedCol() == col - 1 || startMax == col - 1) {
         lineHeight = -1.3;
         ctx.strokeStyle = "green";
-        ctx.lineWidth = 1.5;
+        ctx.lineWidth = 2;
       } else {
         ctx.strokeStyle = "#ddd";
         ctx.lineWidth = 1;
@@ -122,11 +122,11 @@ export class GridCanvas {
       if ((RowData.getSelectedRow() == row) || (startMin == row)) {
         lineHeight = 1.5;
         ctx.strokeStyle = "green";
-        ctx.lineWidth = 1.5;
+        ctx.lineWidth = 2;
       } else if (RowData.getSelectedRow() == row - 1 || (startMax == row - 1)) {
         lineHeight = -1.5;
         ctx.strokeStyle = "green";
-        ctx.lineWidth = 1.5;
+        ctx.lineWidth = 2;
       } else {
         ctx.strokeStyle = "#ddd";
         ctx.lineWidth = 1;
@@ -172,7 +172,7 @@ export class GridCanvas {
           }
         }
 
-        const selectedCells = selectionManager.get();
+        const selectedCells = selectionManager.cellSelection;
 
         let startRowIndex = selectedCells.startRow;
         let endRowIndex = selectedCells.endRow;
@@ -249,7 +249,7 @@ export class GridCanvas {
         const colIndex = startCol + c;
         const colWidth = colData.get(colIndex)?.width ?? this.cellWidth;
 
-        const selectedCells = selectionManager.get();
+        const selectedCells = selectionManager.cellSelection;
         if (selectedCells.startRow > selectedCells.endRow) {
           [selectedCells.startRow, selectedCells.endRow] = [selectedCells.endRow, selectedCells.startRow]
         }
@@ -264,9 +264,9 @@ export class GridCanvas {
         ) {
           // Start Vertical Line
           ctx.beginPath();
-          ctx.moveTo(xPos, yPos);
-          ctx.lineTo(xPos, yPos + rowHeight);
-          ctx.lineWidth = 1.5;
+          ctx.moveTo(xPos, yPos - 1);
+          ctx.lineTo(xPos, yPos + rowHeight + 1);
+          ctx.lineWidth = 2;
           ctx.strokeStyle = "#137E43";
           ctx.stroke();
 
@@ -277,11 +277,11 @@ export class GridCanvas {
           && (selectedCells.endCol === colIndex)
         ) {
 
-          // Start Vertical Line
+          // End Vertical Line
           ctx.beginPath();
-          ctx.moveTo(xPos + colWidth, yPos);
-          ctx.lineTo(xPos + colWidth, yPos + rowHeight);
-          ctx.lineWidth = 1.5;
+          ctx.moveTo(xPos + colWidth , yPos - 1);
+          ctx.lineTo(xPos + colWidth, yPos + rowHeight + 1);
+          ctx.lineWidth = 2;
           ctx.strokeStyle = "#137E43";
           ctx.stroke();
         }
@@ -293,9 +293,9 @@ export class GridCanvas {
 
           // Start Bottom Horizonal Line
           ctx.beginPath();
-          ctx.moveTo(xPos, yPos + rowHeight);
-          ctx.lineTo(xPos + colWidth, yPos + rowHeight);
-          ctx.lineWidth = 1.5;
+          ctx.moveTo(xPos, yPos + rowHeight );
+          ctx.lineTo(xPos + colWidth, yPos + rowHeight );
+          ctx.lineWidth = 2;
           ctx.strokeStyle = "#137E43";
           ctx.stroke();
         }
@@ -308,7 +308,7 @@ export class GridCanvas {
           ctx.beginPath();
           ctx.moveTo(xPos, yPos);
           ctx.lineTo(xPos + colWidth, yPos);
-          ctx.lineWidth = 1.5;
+          ctx.lineWidth = 2;
           ctx.strokeStyle = "#137E43";
           ctx.stroke();
         }
