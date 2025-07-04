@@ -163,6 +163,6 @@ export class SelectionManager {
 
 export const selectionManager = new SelectionManager();
 
-// selectionManager.set(5, 2, 2, 5, true);
+// selectionManager.set(3, 0, 2, 2, true);
 
-selectionManager.RowSelection = {startRow: -100, endRow: -100, selectionState: false}
+selectionManager.RowSelection = {startRow: 4, endRow: 7, selectionState: false}

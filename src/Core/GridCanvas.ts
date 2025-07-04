@@ -75,7 +75,7 @@ export class GridCanvas {
    * @param {number} startCol - Starting column index.
    */
   drawVerticalGridLines(ctx: CanvasRenderingContext2D, startCol: number) {
-    let x = 0.5;
+    let x = -0.5;
     for (let col = startCol; col < startCol + this.totalCols; col++) {
       const colWidth = colData.get(col)?.width ?? this.cellWidth;
       let lineHeight = 0;
@@ -111,19 +111,19 @@ export class GridCanvas {
    * @param {number} startCol - Starting column index.
    */
   drawHorizontalGridLines(ctx: CanvasRenderingContext2D, startRow: number) {
-    let y = 0.5;
+    let y = -0.5;
     for (let row = startRow; row <= startRow + this.totalRows; row++) {
       const rowHeight = rowData.get(row)?.height ?? this.cellHeight;
       let lineHeight = 0;
 
-      let startMin = Math.min(rowObj.RowSelectionStart, rowObj.RowSelectionEnd);
-      let startMax = Math.max(rowObj.RowSelectionStart, rowObj.RowSelectionEnd);
+      let startMin = Math.min(selectionManager.RowSelectionStart, selectionManager.RowSelectionEnd);
+      let startMax = Math.max(selectionManager.RowSelectionStart, selectionManager.RowSelectionEnd);
 
-      if ((RowData.getSelectedRow() == row) || (startMin == row)) {
+      if ((RowData.getSelectedRow() == row) || (startMin == row && selectionManager.RowSelectionStatus)) {
         lineHeight = 1.5;
         ctx.strokeStyle = "green";
         ctx.lineWidth = 2;
-      } else if (RowData.getSelectedRow() == row - 1 || (startMax == row - 1)) {
+      } else if (RowData.getSelectedRow() == row - 1 || (startMax == row - 1 && selectionManager.RowSelectionStatus)) {
         lineHeight = -1.5;
         ctx.strokeStyle = "green";
         ctx.lineWidth = 2;
@@ -185,8 +185,8 @@ export class GridCanvas {
         if (startColIndex > endColIndex) {
           [startColIndex, endColIndex] = [endColIndex, startColIndex];
         }
-        let startRowMin = Math.min(rowObj.RowSelectionStart, rowObj.RowSelectionEnd);
-        let startRowMax = Math.max(rowObj.RowSelectionStart, rowObj.RowSelectionEnd);
+        let startRowMin = Math.min(selectionManager.RowSelectionStart, selectionManager.RowSelectionEnd);
+        let startRowMax = Math.max(selectionManager.RowSelectionStart, selectionManager.RowSelectionEnd);
         let startColMin = Math.min(colObj.ColSelectionStart, colObj.ColSelectionEnd);
         let startColMax = Math.max(colObj.ColSelectionStart, colObj.ColSelectionEnd);
         if (
@@ -201,6 +201,7 @@ export class GridCanvas {
           || (RowData.getSelectedRow() === rowIndex && colIndex !== 0)
           || (startRowMin <= rowIndex)
           && (startRowMax >= rowIndex)
+          && selectionManager.RowSelectionStatus
           || (startColMin <= colIndex)
           && (startColMax >= colIndex)
           || (ColData.getSelectedCol() === colIndex && rowIndex !== 0)

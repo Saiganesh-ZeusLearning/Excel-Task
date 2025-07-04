@@ -116,17 +116,12 @@ export class ColumnLabelCanvas {
       return label;
     }
 
-    let x = 0.5;
+    let x = -0.5;
 
     for (let col = startCol; col <= startCol + this.totalCols; col++) {
       this.startCol = startCol;
       const colInfo = colData.get(col);
       const nxtWidth = colInfo ? colInfo.width : this.cellWidth;
-
-      ctx.beginPath();
-      ctx.moveTo(x - 0.5, 23);
-      ctx.lineTo(x + nxtWidth - 0.5, 23);
-      ctx.stroke();
 
       const selectedCells = selectionManager.getCellSelection;
 
@@ -149,6 +144,9 @@ export class ColumnLabelCanvas {
         ctx.font = "bold 14px Arial";
 
         // Draw horizontal line
+        ctx.beginPath();
+        ctx.moveTo(x, 23);
+        ctx.lineTo(x + nxtWidth, 23);
         ctx.lineWidth = 1.5;
         ctx.strokeStyle = "green";
         ctx.stroke();
@@ -167,6 +165,9 @@ export class ColumnLabelCanvas {
         ctx.font = "12px sans-serif";
 
         // Draw horizontal line
+        ctx.beginPath();
+        ctx.moveTo(x, 23);
+        ctx.lineTo(x + nxtWidth, 23);
         ctx.lineWidth = 2;
         ctx.strokeStyle = "green";
         ctx.stroke();
@@ -185,11 +186,15 @@ export class ColumnLabelCanvas {
         ctx.font = "12px sans-serif";
 
         // Draw horizontal line
-        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.lineWidth = 0.5;
+        ctx.moveTo(x, 23);
+        ctx.lineTo(x + nxtWidth, 23);
+        ctx.stroke();
 
-        if(endColIndex == col - 1){
+        if (endColIndex == col - 1) {
           ctx.strokeStyle = "#A0D8B9";
-        }else{
+        } else {
           ctx.strokeStyle = "#ddd";
         }
 
@@ -266,14 +271,14 @@ export class ColumnLabelCanvas {
       }
       if (Math.abs(offsetX - (x + width)) <= 4 && offsetY < 9) {
         this.skipClick = true;
-        cellData.insertColumnAt(col+2);
-        ColData.setSelectedCol(col+1);
-        colData.insertColumnAt(col+1)
+        cellData.insertColumnAt(col + 2);
+        ColData.setSelectedCol(col + 1);
+        colData.insertColumnAt(col + 1)
         ColData.setSelectedCellCol(null);
         excelRenderer.render();
         break;
       }
-      
+
       x += width;
     }
     inputManager.inputDiv.style.display = "none";
@@ -320,12 +325,12 @@ export class ColumnLabelCanvas {
     if (!found && !this.isResizing) {
       this.canvas.style.cursor = "url('../../build/style/cursor-down.png') 12 12, auto";
     }
-    
+
     if (this.isResizing && this.targetCol !== -1) {
       const diff = offsetX - this.resizeStartX;
       const currentWidth = colData.get(this.targetCol)?.width ?? this.cellWidth;
       const newWidth = Math.max(30, currentWidth + diff);
-      
+
       colData.set(this.targetCol, newWidth);
       this.resizeStartX = offsetX;
 
