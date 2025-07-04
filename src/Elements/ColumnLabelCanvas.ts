@@ -1,7 +1,9 @@
+import { cellData } from "../DataStructures/CellData.js";
 import { ColData, colData } from "../DataStructures/ColData.js";
 import { RowData } from "../DataStructures/RowData.js";
 import { selectionManager } from "../Interaction/SelectionManager.js";
 import { excelRenderer, inputManager } from "../main.js";
+import { rowObj } from "./RowLabelCanvas.js";
 
 /**
  * Class responsible for rendering and interacting with the column label canvas (A, B, C...).
@@ -126,7 +128,7 @@ export class ColumnLabelCanvas {
       ctx.lineTo(x + nxtWidth - 0.5, 23);
       ctx.stroke();
 
-      const selectedCells = selectionManager.cellSelection;
+      const selectedCells = selectionManager.getCellSelection;
 
       let startColIndex = selectedCells.startCol;
       let endColIndex = selectedCells.endCol;
@@ -140,7 +142,7 @@ export class ColumnLabelCanvas {
       let startMax = Math.max(this.ColSelectionStart, this.ColSelectionEnd);
 
       // Highlight logic
-      if (this.isMultipleColSelection && ColData.getSelectedCol() === col || startMin <= col && startMax >= col) {
+      if (ColData.getSelectedCol() === col || startMin <= col && startMax >= col) {
         ctx.fillStyle = "#107C41";
         ctx.fillRect(x, 0, nxtWidth, 24);
         ctx.fillStyle = "white";
@@ -158,7 +160,7 @@ export class ColumnLabelCanvas {
         ctx.lineTo(x, this.canvas.height - 1.5);
         ctx.lineWidth = 1;
         ctx.stroke();
-      } else if ((ColData.getSelectedCellCol() === col || RowData.getSelectedRow()) || (selectionState && startColIndex <= col && endColIndex >= col)) {
+      } else if ((selectionManager.RowSelectionStatus) || (selectionState && startColIndex <= col && endColIndex >= col)) {
         ctx.fillStyle = "#CAEAD8";
         ctx.fillRect(x, 0, nxtWidth, 24);
         ctx.fillStyle = "green";
@@ -227,8 +229,8 @@ export class ColumnLabelCanvas {
         RowData.setSelectedRow(null);
         RowData.setSelectedCellRow(null);
         ColData.setSelectedCellCol(null);
-        this.ColSelectionStart = selectionManager.cellSelection.currCol;
-        this.ColSelectionEnd = selectionManager.cellSelection.currCol;
+        this.ColSelectionStart = selectionManager.getCellSelection.currCol;
+        this.ColSelectionEnd = selectionManager.getCellSelection.currCol;
         this.isMultipleColSelection = true;
         selectionManager.set(-100, -100, -100, -100, false);
         excelRenderer.render();
@@ -244,6 +246,7 @@ export class ColumnLabelCanvas {
    */
   private handleMouseDownResizing(e: MouseEvent) {
     const offsetX = e.offsetX;
+    const offsetY = e.offsetY
     let x = 0;
 
     this.skipClick = false;
@@ -254,13 +257,23 @@ export class ColumnLabelCanvas {
       const col = this.startCol + i;
       const width = colData.get(col)?.width ?? this.cellWidth;
 
-      if (Math.abs(offsetX - (x + width)) <= 4) {
+      if (Math.abs(offsetX - (x + width)) <= 4 && offsetY > 9) {
         this.isResizing = true;
         this.resizeStartX = offsetX;
         this.targetCol = col;
         this.skipClick = true;
         break;
       }
+      if (Math.abs(offsetX - (x + width)) <= 4 && offsetY < 9) {
+        this.skipClick = true;
+        cellData.insertColumnAt(col+2);
+        ColData.setSelectedCol(col+1);
+        colData.insertColumnAt(col+1)
+        ColData.setSelectedCellCol(null);
+        excelRenderer.render();
+        break;
+      }
+      
       x += width;
     }
     inputManager.inputDiv.style.display = "none";
@@ -274,36 +287,45 @@ export class ColumnLabelCanvas {
    */
   private handleMouseMove(e: MouseEvent) {
     const offsetX = e.offsetX;
+    const offsetY = e.offsetY
     let x = 0;
     let found = false;
+    let isColAdd = false;
 
     for (let i = 0; i < this.totalCols; i++) {
       const col = this.startCol + i;
       const width = colData.get(col)?.width ?? this.cellWidth;
 
-      if (Math.abs(offsetX - (x + width)) <= 4) {
+      if (Math.abs(offsetX - (x + width)) <= 4 && offsetY > 9) {
         this.canvas.style.cursor = "w-resize";
         found = true;
         break;
       }
+      if (Math.abs(offsetX - (x + width)) <= 4 && offsetY < 9) {
+        this.canvas.style.cursor = "copy";
+        found = true;
+        isColAdd = true;
+        break;
+      }
+
       x += width;
     }
 
 
     if (this.isMultipleColSelection) {
-      this.ColSelectionEnd = selectionManager.cellSelection.currCol;
+      this.ColSelectionEnd = selectionManager.getCellSelection.currCol;
       excelRenderer.render();
     }
 
     if (!found && !this.isResizing) {
       this.canvas.style.cursor = "url('../../build/style/cursor-down.png') 12 12, auto";
     }
-
+    
     if (this.isResizing && this.targetCol !== -1) {
       const diff = offsetX - this.resizeStartX;
       const currentWidth = colData.get(this.targetCol)?.width ?? this.cellWidth;
       const newWidth = Math.max(30, currentWidth + diff);
-
+      
       colData.set(this.targetCol, newWidth);
       this.resizeStartX = offsetX;
 

@@ -72,6 +72,25 @@ export class RowData {
     return Object.entries(this.rows).map(([row, data]) => [Number(row), data]);
   }
 
+
+  insertRowAt(row: number): void {
+    const referenceHeight = this.get(row - 1)?.height ?? 24;
+
+    // Shift rows from bottom to top, delete original after moving
+    const entriesToShift = this.entries()
+      .filter(([r]) => r >= row)
+      .sort((a, b) => b[0] - a[0]); // descending order
+
+    for (const [r, data] of entriesToShift) {
+      this.set(r + 1, data.height); // shift to next row
+      this.delete(r);               // remove original
+    }
+
+    // Set inserted row with height copied from above
+    this.set(row, referenceHeight);
+  }
+
+
   // --- Static Handlers for Row Selection ---
 
   /**
@@ -113,3 +132,11 @@ export const rowData = new RowData();
 // Example usage:
 // RowData.setSelectedCellRow(5);
 // RowData.setSelectedRow(5);
+
+// rowData.insertRowAt(5);
+// rowData.set(5, 25);
+// rowData.set(7, 25);
+
+// console.log(rowData.entries());
+
+

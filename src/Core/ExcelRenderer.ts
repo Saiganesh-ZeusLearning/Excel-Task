@@ -1,7 +1,8 @@
 import { colData } from "../DataStructures/ColData.js";
-import { RowData, rowData } from "../DataStructures/RowData.js";
+import { rowData } from "../DataStructures/RowData.js";
 import { colObj } from "../Elements/ColumnLabelCanvas.js";
 import { rowObj } from "../Elements/RowLabelCanvas.js";
+import { CanvasLeftOffset, CanvasTopOffset } from "../Utils/GlobalVariables.js";
 import { gridObj } from "./GridCanvas.js";
 
 /**
@@ -94,12 +95,12 @@ export class ExcelRenderer {
 
     // Move row label canvas
     const rowLabel = document.querySelector(".row-label") as HTMLElement;
-    rowLabel.style.top = `${canvasTop + 24}px`;
+    rowLabel.style.top = `${canvasTop + CanvasTopOffset}px`;
     rowLabel.style.left = `${scrollLeft}px`;
 
     // Move column label canvas
     const colLabel = document.querySelector(".col-label") as HTMLElement;
-    colLabel.style.left = `${canvasLeft + 50}px`;
+    colLabel.style.left = `${canvasLeft + CanvasLeftOffset}px`;
     colLabel.style.top = `${scrollTop}px`;
 
     // Move grid canvas

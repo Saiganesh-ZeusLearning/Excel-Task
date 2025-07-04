@@ -172,7 +172,7 @@ export class GridCanvas {
           }
         }
 
-        const selectedCells = selectionManager.cellSelection;
+        const selectedCells = selectionManager.getCellSelection;
 
         let startRowIndex = selectedCells.startRow;
         let endRowIndex = selectedCells.endRow;
@@ -249,7 +249,7 @@ export class GridCanvas {
         const colIndex = startCol + c;
         const colWidth = colData.get(colIndex)?.width ?? this.cellWidth;
 
-        const selectedCells = selectionManager.cellSelection;
+        const selectedCells = selectionManager.getCellSelection;
         if (selectedCells.startRow > selectedCells.endRow) {
           [selectedCells.startRow, selectedCells.endRow] = [selectedCells.endRow, selectedCells.startRow]
         }

@@ -3,6 +3,7 @@ import { ColData } from "../DataStructures/ColData.js";
 import { RowData, rowData } from "../DataStructures/RowData.js";
 import { selectionManager } from "../Interaction/SelectionManager.js";
 import { excelRenderer, inputManager } from "../main.js";
+import { CanvasLeftOffset } from "../Utils/GlobalVariables.js";
 
 /**
  * Handles rendering and interaction for row labels in the Excel grid.
@@ -27,7 +28,6 @@ export class RowLabelCanvas {
   /** Default cell height */
   public cellHeight = 24;
 
-  public isMultipleRowSelection: boolean = false;
 
   public RowSelectionStart: number = -100;
 
@@ -107,7 +107,7 @@ export class RowLabelCanvas {
       ctx.moveTo(this.canvas.width, y - 1);
       ctx.lineTo(this.canvas.width, y + nxtHeight + 1);
 
-      const selectedCells = selectionManager.cellSelection;
+      const selectedCells = selectionManager.getCellSelection;
       let startRowIndex = selectedCells.startRow;
       let endRowIndex = selectedCells.endRow;
       let selectionState = selectedCells.selectionState;
@@ -116,11 +116,12 @@ export class RowLabelCanvas {
         [startRowIndex, endRowIndex] = [endRowIndex, startRowIndex]
       }
 
-      let startMin = Math.min(this.RowSelectionEnd, this.RowSelectionStart);
-      let startMax = Math.max(this.RowSelectionEnd, this.RowSelectionStart);
+      let startMin = Math.min(selectionManager.RowSelectionStart, selectionManager.RowSelectionEnd);
+      let startMax = Math.max(selectionManager.RowSelectionStart, selectionManager.RowSelectionEnd);
+      console.log(selectionManager.RowSelectionStatus);
+      
       // === Row Number Label Highlight ===
       if (((RowData.getSelectedRow() == row) || startMin <= row && startMax >= row)) {
-        console.log(RowData.getSelectedRow())
         ctx.fillStyle = "#107C41";
         ctx.fillRect(0, y, 100, nxtHeight);
         ctx.fillStyle = "white";
@@ -206,14 +207,14 @@ export class RowLabelCanvas {
       const height = rowData.get(row)?.height ?? this.cellHeight;
 
       if (offsetY >= y + 4 && offsetY <= y + height) {
-        RowData.setSelectedRow(row);
-        ColData.setSelectedCol(null);
-        RowData.setSelectedCellRow(null);
-        ColData.setSelectedCellCol(null);
-        this.RowSelectionStart = selectionManager.cellSelection.currRow;
-        this.RowSelectionEnd = selectionManager.cellSelection.currRow;
-        this.isMultipleRowSelection = true;
-        selectionManager.set(-100, -100, -100, -100, false);
+        inputManager.inputDiv.style.left = `${CanvasLeftOffset}px`;
+        this.RowSelectionStart = selectionManager.getCellSelection.currRow;
+        this.RowSelectionEnd = selectionManager.getCellSelection.currRow;
+        RowData.setSelectedCellRow(this.RowSelectionStart);
+        ColData.setSelectedCellCol(0);
+        selectionManager.RowSelectionStatus = true;
+        selectionManager.set(this.RowSelectionStart, 0, this.RowSelectionStart, 0, true);
+        inputManager.setInputLocation(this.RowSelectionStart, 0)
         excelRenderer.render();
         return;
       }
@@ -250,6 +251,8 @@ export class RowLabelCanvas {
         this.skipClick = true;
         cellData.insertRowAt(row+2);
         RowData.setSelectedRow(row+1);
+        rowData.insertRowAt(row+1);
+        RowData.setSelectedCellRow(null);
         excelRenderer.render();
         break;
       }
@@ -257,9 +260,6 @@ export class RowLabelCanvas {
       y += height;
     }
 
-    inputManager.inputDiv.style.display = "none";
-    RowData.setSelectedCellRow(null);
-    ColData.setSelectedCellCol(null);
   }
 
   /**
@@ -291,8 +291,8 @@ export class RowLabelCanvas {
       y += height;
     }
 
-    if (this.isMultipleRowSelection) {
-      this.RowSelectionEnd = selectionManager.cellSelection.currRow;
+    if (selectionManager.RowSelectionStatus) {
+      this.RowSelectionEnd = selectionManager.getCellSelection.currRow;
       excelRenderer.render();
     }
 
@@ -319,7 +319,7 @@ export class RowLabelCanvas {
    */
   private handleMouseUp() {
     this.isResizing = false;
-    this.isMultipleRowSelection = false;
+    selectionManager.RowSelectionStatus = false;
     this.RowSelectionStart = -100;
     this.RowSelectionEnd = -100;
     this.targetRow = -1;

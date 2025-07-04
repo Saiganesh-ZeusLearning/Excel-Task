@@ -65,10 +65,10 @@ body {
 }
 
 .input-selection{
-    display: none;
+    display: block;
     position: absolute;
     width: 92px;
-    height: 18px;
+    height: 10px;
     border-radius: 0;
     border: none;
     z-index: 6;

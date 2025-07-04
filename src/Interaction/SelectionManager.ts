@@ -35,6 +35,10 @@ export class SelectionManager {
 
     private selectionState: boolean = false;
 
+    public RowSelectionStart = -100
+    public RowSelectionEnd = -100
+    public RowSelectionStatus = false
+
     /** Default Row Height */
     private defaultRowHeight = 24;
 
@@ -54,7 +58,7 @@ export class SelectionManager {
         this.attachListeners();
     }
 
-    get cellSelection() {
+    get getCellSelection() {
         return {
             startRow: this.startRow,
             startCol: this.startCol,
@@ -63,6 +67,20 @@ export class SelectionManager {
             currRow: this.currRow, 
             currCol: this.currCol, 
             selectionState : this.selectionState
+        }
+    }
+
+    set RowSelection(data: {startRow: number, endRow: number, selectionState: boolean}){
+            this.RowSelectionStart = data.startRow;
+            this.RowSelectionEnd = data.endRow;
+            this.RowSelectionStatus = data.selectionState;
+    }
+
+    get RowSelection(){
+        return {
+            startRow: this.RowSelectionStart,
+            endRow: this.RowSelectionEnd,
+            selectionState: this.RowSelectionStatus,
         }
     }
 
@@ -146,3 +164,5 @@ export class SelectionManager {
 export const selectionManager = new SelectionManager();
 
 // selectionManager.set(5, 2, 2, 5, true);
+
+selectionManager.RowSelection = {startRow: -100, endRow: -100, selectionState: false}

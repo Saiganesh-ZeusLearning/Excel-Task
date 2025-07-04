@@ -64,6 +64,24 @@ export class ColData {
     delete this.cols[col];
   }
 
+  insertColumnAt(col: number): void {
+    const referenceWidth = this.get(col - 1)?.width ?? 100;
+
+    // Shift columns from right to left (descending)
+    const entriesToShift = this.entries()
+      .filter(([c]) => c >= col)
+      .sort((a, b) => b[0] - a[0]); // descending order
+
+    for (const [c, data] of entriesToShift) {
+      this.set(c + 1, data.width); // shift to next col
+      this.delete(c);              // delete original
+    }
+
+    // Insert new column with copied width
+    this.set(col, referenceWidth);
+  }
+
+
   /**
    * Returns all stored column entries.
    * @returns {[number, { width: number }][]} Array of [col, data] pairs.

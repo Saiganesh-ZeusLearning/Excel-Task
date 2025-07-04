@@ -71,12 +71,51 @@ export class InputManager {
     });
   }
 
+  public setInputLocation(setRow: number, setCol: number) {
+    // === Calculate Column ===
+    let cellLeft = 50;
+    for (let i = 0; i < setCol; i++) {
+      cellLeft += colData.get(i)?.width ?? 100;
+    }
+
+
+    // === Calculate Row ===
+    let cellTop = 30;
+    for (let i = 0; i < setRow; i++) {
+      cellTop += rowData.get(i)?.height ?? 24;
+    }
+        // Save previous cell's data before moving
+    if (this.prevTop !== cellTop || this.prevLeft !== cellLeft) {
+      if (this.inputDiv.value !== "") {
+        cellData.set(this.prevRow + 1, this.prevCol + 1, this.inputDiv.value);
+        this.inputDiv.value = "";
+      }
+
+      if (cellData.has(setRow + 1, setCol + 1)) {
+        this.inputDiv.value = cellData.get(setRow + 1, setCol + 1) || "";
+      }
+
+      this.prevRow = setRow;
+      this.prevCol = setCol;
+      this.prevTop = cellTop;
+      this.prevLeft = cellLeft;
+    }
+
+    RowData.setSelectedCellRow(setRow);
+    ColData.setSelectedCellCol(setCol);
+
+    this.inputDiv.style.height = `${(rowData.get(setRow)?.height ?? 18) - 10}px`;
+    this.inputDiv.style.width = `${(colData.get(setCol)?.width ?? 100) - 8}px`;
+    this.inputDiv.style.top = `${cellTop}px`;
+    this.inputDiv.style.left = `${cellLeft}px`;
+    this.inputDiv.focus();
+  }
+
   /**
    * Handles click event to select and focus a cell.
    * Calculates row/col, positions input box, and handles data loading/saving.
    * @param {MouseEvent} e - Mouse click event
    */
-
 
 
   private handleClickEvent(e: MouseEvent) {
@@ -136,14 +175,12 @@ export class InputManager {
       this.prevLeft = cellLeft;
     }
 
+    this.setInputLocation(row, col);
+
     // Show and position input box
     this.inputDiv.style.display = "block";
     this.inputDiv.style.caretColor = "transparent";
 
-    this.inputDiv.style.height = `${(rowData.get(row)?.height ?? 24) - 6}px`;
-    this.inputDiv.style.width = `${(colData.get(col)?.width ?? 100) - 8}px`;
-    this.inputDiv.style.top = `${cellTop}px`;
-    this.inputDiv.style.left = `${cellLeft}px`;
 
     this.shiftRow = 0;
     this.shiftCol = 0;
@@ -176,10 +213,17 @@ export class InputManager {
       selectionManager.set(this.prevRow, this.prevCol, this.prevRow + this.shiftRow, this.prevCol + --this.shiftCol, true)
     }
 
-
-
-
-    if (e.key === "Enter" || e.key === "ArrowDown" && !e.shiftKey) {
+    if (e.key === "Enter" && e.shiftKey) {
+      const aboveHeight = rowData.get(this.prevRow - 1)?.height ?? this.defaultRowHeight;
+      this.inputDiv.select();
+      this.prevTop -= aboveHeight;
+      this.prevRow--;
+      this.inputDiv.style.caretColor = "transparent";
+      this.shiftRow = 0;
+      this.shiftCol = 0;
+      selectionManager.set(this.prevRow, this.prevCol, this.prevRow, this.prevCol, true)
+    }
+    else if (e.key === "Enter" || e.key === "ArrowDown" && !e.shiftKey) {
       const currHeight = rowData.get(this.prevRow)?.height ?? this.defaultRowHeight;
       this.prevTop += currHeight;
       this.prevRow++;
@@ -222,16 +266,21 @@ export class InputManager {
       this.inputDiv.style.caretColor = "black";
     }
 
-    // Update selection state
-    RowData.setSelectedCellRow(this.prevRow);
-    ColData.setSelectedCellCol(this.prevCol);
 
     let leftWidth = this.prevLeft + (colData.get(this.prevCol)?.width ?? this.defaultColWidth);
+    let currSelectedCell = selectionManager.getCellSelection.endCol;
+    let leftWidthCellSelected = 50;
+    for (let i = 0; i < currSelectedCell; i++) {
+      leftWidthCellSelected += colData.get(currSelectedCell)?.width ?? 100;
+    }
 
-
-    if (leftWidth > this.width + this.scrollDiv.scrollLeft) {
+    if (leftWidth > this.width + this.scrollDiv.scrollLeft
+      || leftWidthCellSelected > this.width + this.scrollDiv.scrollLeft
+    ) {
       this.scrollDiv.scrollLeft += colData.get(this.prevCol)?.width ?? this.defaultColWidth;
-    } else if (this.prevLeft < this.scrollDiv.scrollLeft) {
+    } else if ((this.prevLeft < this.scrollDiv.scrollLeft
+      || leftWidthCellSelected < this.scrollDiv.scrollLeft)
+    ) {
       this.scrollDiv.scrollLeft -= colData.get(this.prevCol)?.width ?? this.defaultColWidth;
     }
 
@@ -247,14 +296,16 @@ export class InputManager {
     const nextVal = cellData.get(this.prevRow + 1, this.prevCol + 1);
     this.inputDiv.value = nextVal ?? "";
 
-    // Reposition input box
-    this.inputDiv.style.height = `${(rowData.get(this.prevRow)?.height ?? 24) - 6}px`;
-    this.inputDiv.style.width = `${(colData.get(this.prevCol)?.width ?? 100) - 8}px`;
-    this.inputDiv.style.top = `${this.prevTop}px`;
-    this.inputDiv.style.left = `${this.prevLeft}px`;
-    this.inputDiv.focus();
+      // Reposition input box
+      this.inputDiv.style.height = `${(rowData.get(this.prevRow)?.height ?? 18) - 10}px`;
+      this.inputDiv.style.width = `${(colData.get(this.prevCol)?.width ?? 100) - 8}px`;
+      this.inputDiv.style.top = `${this.prevTop}px`;
+      this.inputDiv.style.left = `${this.prevLeft}px`;
+      this.inputDiv.focus();
 
     // Redraw grid to update highlights
     excelRenderer.render();
   }
+
+
 }
