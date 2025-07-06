@@ -1,7 +1,8 @@
 import { InputManager } from "./Interaction/InputManager.js";
-import { ExcelRenderer } from "./Core/ExcelRenderer.js";
 import { AutoScroller } from "./Interaction/AutoScroller.js";
+import { LoadDataManager } from "./Utils/LoadData.js";
 
-const requestAnimationFrame = new AutoScroller();
+new LoadDataManager();
+new AutoScroller();
 export const inputManager = new InputManager();
-export const excelRenderer = new ExcelRenderer();
+

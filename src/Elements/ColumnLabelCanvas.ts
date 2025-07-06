@@ -1,9 +1,10 @@
+import { excelRenderer } from "../Core/ExcelRenderer.js";
 import { cellData } from "../DataStructures/CellData.js";
 import { ColData, colData } from "../DataStructures/ColData.js";
 import { RowData } from "../DataStructures/RowData.js";
 import { selectionManager } from "../Interaction/SelectionManager.js";
-import { excelRenderer, inputManager } from "../main.js";
-import { rowObj } from "./RowLabelCanvas.js";
+import {  inputManager } from "../main.js";
+import { CanvasTopOffset, cellWidth, totalVisibleCols } from "../Utils/GlobalVariables.js";
 
 /**
  * Class responsible for rendering and interacting with the column label canvas (A, B, C...).
@@ -21,20 +22,8 @@ export class ColumnLabelCanvas {
   /** @type {number} Height of the label area */
   private height = 24;
 
-  /** @type {number} Default width for a column */
-  public cellWidth = 100;
-
-  /** @type {number} Total number of columns to render */
-  private totalCols = 20;
-
   /** @type {number} Total canvas width based on totalCols and cellWidth */
-  private width = this.totalCols * this.cellWidth + 1;
-
-  public isMultipleColSelection: boolean = false;
-
-  public ColSelectionStart: number = -100;
-
-  public ColSelectionEnd: number = -100;
+  private width = totalVisibleCols * cellWidth + 1;
 
   /** @type {boolean} Whether column resizing is in progress */
   private isResizing = false;
@@ -118,10 +107,10 @@ export class ColumnLabelCanvas {
 
     let x = -0.5;
 
-    for (let col = startCol; col <= startCol + this.totalCols; col++) {
+    for (let col = startCol; col <= startCol + totalVisibleCols; col++) {
       this.startCol = startCol;
       const colInfo = colData.get(col);
-      const nxtWidth = colInfo ? colInfo.width : this.cellWidth;
+      const nxtWidth = colInfo ? colInfo.width : cellWidth;
 
       const selectedCells = selectionManager.getCellSelection;
 
@@ -133,11 +122,11 @@ export class ColumnLabelCanvas {
         [startColIndex, endColIndex] = [endColIndex, startColIndex]
       }
 
-      let startMin = Math.min(this.ColSelectionStart, this.ColSelectionEnd);
-      let startMax = Math.max(this.ColSelectionStart, this.ColSelectionEnd);
-
+      let startMin = Math.min(selectionManager.ColSelectionStart, selectionManager.ColSelectionEnd);
+      let startMax = Math.max(selectionManager.ColSelectionStart, selectionManager.ColSelectionEnd);
+      let colSelectionState = selectionManager.ColSelectionStatus;
       // Highlight logic
-      if (ColData.getSelectedCol() === col || startMin <= col && startMax >= col) {
+      if (ColData.getSelectedCol() === col || (colSelectionState && startMin <= col && startMax >= col)) {
         ctx.fillStyle = "#107C41";
         ctx.fillRect(x, 0, nxtWidth, 24);
         ctx.fillStyle = "white";
@@ -171,12 +160,12 @@ export class ColumnLabelCanvas {
         ctx.lineWidth = 2;
         ctx.strokeStyle = "green";
         ctx.stroke();
-        ctx.strokeStyle = "#A0D8B9";
-
+        
         // Draw vertical line
         ctx.beginPath();
         ctx.moveTo(x, -2.5);
         ctx.lineTo(x, this.canvas.height - 2.5);
+        ctx.strokeStyle = "#A0D8B9";
         ctx.lineWidth = 1;
         ctx.stroke();
       } else {
@@ -184,12 +173,13 @@ export class ColumnLabelCanvas {
         ctx.fillRect(x, 0, nxtWidth, 24);
         ctx.fillStyle = "#000";
         ctx.font = "12px sans-serif";
-
+        
         // Draw horizontal line
         ctx.beginPath();
         ctx.lineWidth = 0.5;
         ctx.moveTo(x, 23);
         ctx.lineTo(x + nxtWidth, 23);
+        ctx.strokeStyle = "#F5F5F5";
         ctx.stroke();
 
         if (endColIndex == col - 1) {
@@ -225,19 +215,20 @@ export class ColumnLabelCanvas {
     let x = 0.5;
     let offsetX = e.offsetX;
 
-    for (let i = 0; i < this.totalCols; i++) {
+    for (let i = 0; i < totalVisibleCols; i++) {
       const col = this.startCol + i;
-      const width = colData.get(col)?.width ?? this.cellWidth;
+      const width = colData.get(col)?.width ?? cellWidth;
 
       if (offsetX >= x + 4 && offsetX <= x + width) {
-        // ColData.setSelectedCol(col);
-        RowData.setSelectedRow(null);
-        RowData.setSelectedCellRow(null);
-        ColData.setSelectedCellCol(null);
-        this.ColSelectionStart = selectionManager.getCellSelection.currCol;
-        this.ColSelectionEnd = selectionManager.getCellSelection.currCol;
-        this.isMultipleColSelection = true;
-        selectionManager.set(-100, -100, -100, -100, false);
+        inputManager.inputDiv.style.left = `${CanvasTopOffset}px`;
+        selectionManager.ColSelectionStart = selectionManager.getCellSelection.currCol;
+        console.log(selectionManager.ColSelectionStart)
+        selectionManager.ColSelectionEnd = selectionManager.getCellSelection.currCol;
+        ColData.setSelectedCellCol(selectionManager.ColSelectionStart);
+        RowData.setSelectedCellRow(0);
+        selectionManager.ColSelectionStatus = true;
+        selectionManager.set(0, selectionManager.ColSelectionStart, 0, selectionManager.ColSelectionStart, true);
+        inputManager.setInputLocation(0, selectionManager.ColSelectionStart);
         excelRenderer.render();
         return;
       }
@@ -258,9 +249,9 @@ export class ColumnLabelCanvas {
 
     selectionManager.set(-100, -100, -100, -100, false);
 
-    for (let i = 0; i < this.totalCols; i++) {
+    for (let i = 0; i < totalVisibleCols; i++) {
       const col = this.startCol + i;
-      const width = colData.get(col)?.width ?? this.cellWidth;
+      const width = colData.get(col)?.width ?? cellWidth;
 
       if (Math.abs(offsetX - (x + width)) <= 4 && offsetY > 9) {
         this.isResizing = true;
@@ -273,7 +264,8 @@ export class ColumnLabelCanvas {
         this.skipClick = true;
         cellData.insertColumnAt(col + 2);
         ColData.setSelectedCol(col + 1);
-        colData.insertColumnAt(col + 1)
+        colData.insertColumnAt(col + 1);
+        inputManager.setInputLocation(0,col);
         ColData.setSelectedCellCol(null);
         excelRenderer.render();
         break;
@@ -281,9 +273,6 @@ export class ColumnLabelCanvas {
 
       x += width;
     }
-    inputManager.inputDiv.style.display = "none";
-    RowData.setSelectedCellRow(null);
-    ColData.setSelectedCellCol(null);
   }
 
   /**
@@ -297,9 +286,9 @@ export class ColumnLabelCanvas {
     let found = false;
     let isColAdd = false;
 
-    for (let i = 0; i < this.totalCols; i++) {
+    for (let i = 0; i < totalVisibleCols; i++) {
       const col = this.startCol + i;
-      const width = colData.get(col)?.width ?? this.cellWidth;
+      const width = colData.get(col)?.width ?? cellWidth;
 
       if (Math.abs(offsetX - (x + width)) <= 4 && offsetY > 9) {
         this.canvas.style.cursor = "w-resize";
@@ -317,8 +306,8 @@ export class ColumnLabelCanvas {
     }
 
 
-    if (this.isMultipleColSelection) {
-      this.ColSelectionEnd = selectionManager.getCellSelection.currCol;
+    if (selectionManager.ColSelectionStatus) {
+      selectionManager.ColSelectionEnd = selectionManager.getCellSelection.currCol;
       excelRenderer.render();
     }
 
@@ -328,7 +317,7 @@ export class ColumnLabelCanvas {
 
     if (this.isResizing && this.targetCol !== -1) {
       const diff = offsetX - this.resizeStartX;
-      const currentWidth = colData.get(this.targetCol)?.width ?? this.cellWidth;
+      const currentWidth = colData.get(this.targetCol)?.width ?? cellWidth;
       const newWidth = Math.max(30, currentWidth + diff);
 
       colData.set(this.targetCol, newWidth);
@@ -343,10 +332,10 @@ export class ColumnLabelCanvas {
    */
   private handleMouseUp() {
     this.isResizing = false;
-    this.isMultipleColSelection = false;
+    selectionManager.ColSelectionStatus = false;
 
-    this.ColSelectionStart = -100;
-    this.ColSelectionEnd = -100;
+    selectionManager.ColSelectionStart = -100;
+    selectionManager.ColSelectionEnd = -100;
     this.targetCol = -1;
     inputManager.scrollDiv.style.cursor = "cell";
   }

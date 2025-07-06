@@ -2,7 +2,7 @@ import { colData } from "../DataStructures/ColData.js";
 import { rowData } from "../DataStructures/RowData.js";
 import { colObj } from "../Elements/ColumnLabelCanvas.js";
 import { rowObj } from "../Elements/RowLabelCanvas.js";
-import { CanvasLeftOffset, CanvasTopOffset } from "../Utils/GlobalVariables.js";
+import { CanvasLeftOffset, CanvasTopOffset, cellHeight, cellWidth } from "../Utils/GlobalVariables.js";
 import { gridObj } from "./GridCanvas.js";
 
 /**
@@ -63,7 +63,7 @@ export class ExcelRenderer {
     let virtualStartRow = 0;
     let accumulated = 0;
     while (accumulated < scrollTop) {
-      const height = rowData.get(virtualStartRow)?.height ?? rowObj.cellHeight;
+      const height = rowData.get(virtualStartRow)?.height ?? cellHeight;
       if (accumulated + height > scrollTop) break;
       accumulated += height;
       virtualStartRow++;
@@ -73,14 +73,14 @@ export class ExcelRenderer {
     // Calculate canvasTop offset
     let canvasTop = 0;
     for (let i = 0; i < this.startRow; i++) {
-      canvasTop += rowData.get(i)?.height ?? rowObj.cellHeight;
+      canvasTop += rowData.get(i)?.height ?? cellHeight;
     }
 
     // Calculate virtual start column
     let virtualStartCol = 0;
     let accumulatedLeft = 0;
     while (accumulatedLeft < scrollLeft) {
-      const width = colData.get(virtualStartCol)?.width ?? colObj.cellWidth;
+      const width = colData.get(virtualStartCol)?.width ?? cellWidth;
       if (accumulatedLeft + width > scrollLeft) break;
       accumulatedLeft += width;
       virtualStartCol++;
@@ -90,7 +90,7 @@ export class ExcelRenderer {
     // Calculate canvasLeft offset
     let canvasLeft = 0;
     for (let i = 0; i < this.startCol; i++) {
-      canvasLeft += colData.get(i)?.width ?? colObj.cellWidth;
+      canvasLeft += colData.get(i)?.width ?? cellWidth;
     }
 
     // Move row label canvas
@@ -105,8 +105,8 @@ export class ExcelRenderer {
 
     // Move grid canvas
     const grid = document.querySelector(".main-canvas") as HTMLElement;
-    grid.style.top = `${canvasTop + 24}px`;
-    grid.style.left = `${canvasLeft + 50}px`;
+    grid.style.top = `${canvasTop + CanvasTopOffset}px`;
+    grid.style.left = `${canvasLeft + CanvasLeftOffset}px`;
 
     
     // Draw visible parts
@@ -115,3 +115,5 @@ export class ExcelRenderer {
     gridObj.drawGrid(this.gridCtx, this.startRow, this.startCol);
   }
 }
+
+export const excelRenderer = new ExcelRenderer();

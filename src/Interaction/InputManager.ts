@@ -1,7 +1,8 @@
+import { excelRenderer } from "../Core/ExcelRenderer.js";
 import { cellData } from "../DataStructures/CellData.js";
 import { ColData, colData } from "../DataStructures/ColData.js";
 import { RowData, rowData } from "../DataStructures/RowData.js";
-import { excelRenderer } from "../main.js";
+import { cellHeight, cellWidth, ExcelLeftOffset, ExcelTopOffset } from "../Utils/GlobalVariables.js";
 import { selectionManager } from "./SelectionManager.js";
 
 /**
@@ -18,8 +19,6 @@ export class InputManager {
   private prevRow: number = 0;
   private prevCol: number = 0;
 
-  private defaultRowHeight = 24;
-  private defaultColWidth = 100;
 
   public width;
   public height;
@@ -50,12 +49,12 @@ export class InputManager {
   public setInputLocation(setRow: number, setCol: number) {
     let cellLeft = 50;
     for (let i = 0; i < setCol; i++) {
-      cellLeft += colData.get(i)?.width ?? 100;
+      cellLeft += colData.get(i)?.width ?? cellWidth;
     }
 
     let cellTop = 30;
     for (let i = 0; i < setRow; i++) {
-      cellTop += rowData.get(i)?.height ?? 24;
+      cellTop += rowData.get(i)?.height ?? cellHeight;
     }
 
     if (this.prevTop !== cellTop || this.prevLeft !== cellLeft) {
@@ -71,10 +70,10 @@ export class InputManager {
     RowData.setSelectedCellRow(setRow);
     ColData.setSelectedCellCol(setCol);
 
-    this.inputDiv.style.height = `${(rowData.get(setRow)?.height ?? 18) - 10}px`;
-    this.inputDiv.style.width = `${(colData.get(setCol)?.width ?? 100) - 8}px`;
+    this.inputDiv.style.height = `${(rowData.get(setRow)?.height ?? cellHeight) - 14}px`;
+    this.inputDiv.style.width = `${(colData.get(setCol)?.width ?? cellWidth) - 12}px`;
     this.inputDiv.style.top = `${cellTop}px`;
-    this.inputDiv.style.left = `${cellLeft}px`;
+    this.inputDiv.style.left = `${cellLeft + 3}px`;
     this.inputDiv.focus();
   }
 
@@ -83,8 +82,8 @@ export class InputManager {
     const scrollLeft = this.scrollDiv.scrollLeft;
     const scrollTop = this.scrollDiv.scrollTop;
 
-    const clientX = e.clientX + scrollLeft - 50;
-    const clientY = e.clientY + scrollTop - 25;
+    const clientX = e.clientX + scrollLeft - ExcelLeftOffset;
+    const clientY = e.clientY + scrollTop - ExcelTopOffset;
 
     RowData.setSelectedRow(null);
     ColData.setSelectedCol(null);
@@ -92,15 +91,15 @@ export class InputManager {
     let x = 0, col = 0;
     let colWidth: number = 0;
     while (x <= clientX) {
-      colWidth = colData.get(col)?.width ?? this.defaultColWidth;
+      colWidth = colData.get(col)?.width ?? cellWidth;
       if (x + colWidth > clientX) break;
       x += colWidth;
       col++;
     }
 
-    let y = 0, row = 0;
+    let y = 50, row = 0;
     while (y <= clientY) {
-      const rowHeight = rowData.get(row)?.height ?? this.defaultRowHeight;
+      const rowHeight = rowData.get(row)?.height ?? cellHeight;
       if (y + rowHeight > clientY) break;
       y += rowHeight;
       row++;
@@ -110,8 +109,8 @@ export class InputManager {
     ColData.setSelectedCellCol(col);
     selectionManager.set(row, col, row, col, true);
 
-    const cellTop = y + 25;
-    const cellLeft = x + 50;
+    const cellTop = y + ExcelTopOffset;
+    const cellLeft = x + ExcelLeftOffset;
 
     if (this.prevTop !== cellTop || this.prevLeft !== cellLeft) {
       this.saveCurrentCellValue();
@@ -148,23 +147,23 @@ export class InputManager {
     }
 
     if (e.key === 'Enter' && e.shiftKey && this.prevRow > 0) {
-      const above = rowData.get(this.prevRow - 1)?.height ?? this.defaultRowHeight;
+      const above = rowData.get(this.prevRow - 1)?.height ?? cellHeight;
       this.prevTop -= above;
       this.prevRow--;
     } else if (e.key === 'Enter' || e.key === 'ArrowDown') {
-      const curr = rowData.get(this.prevRow)?.height ?? this.defaultRowHeight;
+      const curr = rowData.get(this.prevRow)?.height ?? cellHeight;
       this.prevTop += curr;
       this.prevRow++;
     } else if (e.key === 'ArrowUp' && this.prevRow > 0) {
-      const above = rowData.get(this.prevRow - 1)?.height ?? this.defaultRowHeight;
+      const above = rowData.get(this.prevRow - 1)?.height ?? cellHeight;
       this.prevTop -= above;
       this.prevRow--;
     } else if (e.key === 'ArrowRight') {
-      const curr = colData.get(this.prevCol)?.width ?? this.defaultColWidth;
+      const curr = colData.get(this.prevCol)?.width ?? cellWidth;
       this.prevLeft += curr;
       this.prevCol++;
     } else if (e.key === 'ArrowLeft' && this.prevCol > 0) {
-      const left = colData.get(this.prevCol - 1)?.width ?? this.defaultColWidth;
+      const left = colData.get(this.prevCol - 1)?.width ?? cellWidth;
       this.prevLeft -= left;
       this.prevCol--;
     } else {
@@ -191,9 +190,9 @@ export class InputManager {
 
   private updateInputBoxPosition() {
     this.inputDiv.style.height = `${(rowData.get(this.prevRow)?.height ?? 18) - 10}px`;
-    this.inputDiv.style.width = `${(colData.get(this.prevCol)?.width ?? 100) - 8}px`;
+    this.inputDiv.style.width = `${(colData.get(this.prevCol)?.width ?? 100) - 12}px`;
     this.inputDiv.style.top = `${this.prevTop}px`;
-    this.inputDiv.style.left = `${this.prevLeft}px`;
+    this.inputDiv.style.left = `${this.prevLeft + 3}px`;
     this.inputDiv.focus();
 
     const nextVal = cellData.get(this.prevRow + 1, this.prevCol + 1);
@@ -201,19 +200,19 @@ export class InputManager {
   }
 
   private updateScrollIfNeeded() {
-    let rightEdge = this.prevLeft + (colData.get(this.prevCol)?.width ?? this.defaultColWidth);
-    let bottomEdge = this.prevTop + (rowData.get(this.prevRow)?.height ?? this.defaultRowHeight);
+    let rightEdge = this.prevLeft + (colData.get(this.prevCol)?.width ?? cellWidth);
+    let bottomEdge = this.prevTop + (rowData.get(this.prevRow)?.height ?? cellHeight);
 
     if (rightEdge > this.width + this.scrollDiv.scrollLeft) {
-      this.scrollDiv.scrollLeft += colData.get(this.prevCol)?.width ?? this.defaultColWidth;
+      this.scrollDiv.scrollLeft += colData.get(this.prevCol)?.width ?? cellWidth;
     } else if (this.prevLeft < this.scrollDiv.scrollLeft) {
-      this.scrollDiv.scrollLeft -= colData.get(this.prevCol)?.width ?? this.defaultColWidth;
+      this.scrollDiv.scrollLeft -= colData.get(this.prevCol)?.width ?? cellWidth;
     }
 
-    if (bottomEdge > this.height - 10 + this.scrollDiv.scrollTop) {
-      this.scrollDiv.scrollTop += rowData.get(this.prevRow)?.height ?? this.defaultRowHeight;
+    if (bottomEdge > this.height - 60 + this.scrollDiv.scrollTop) {
+      this.scrollDiv.scrollTop += rowData.get(this.prevRow)?.height ?? cellHeight;
     } else if (this.prevTop < this.scrollDiv.scrollTop + 20) {
-      this.scrollDiv.scrollTop -= rowData.get(this.prevRow)?.height ?? this.defaultRowHeight;
+      this.scrollDiv.scrollTop -= rowData.get(this.prevRow)?.height ?? cellHeight;
     }
   }
 

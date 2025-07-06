@@ -1,9 +1,8 @@
 import { cellData } from "../DataStructures/CellData.js";
 import { ColData, colData } from "../DataStructures/ColData.js";
 import { RowData, rowData } from "../DataStructures/RowData.js";
-import { colObj } from "../Elements/ColumnLabelCanvas.js";
-import { rowObj } from "../Elements/RowLabelCanvas.js";
 import { selectionManager } from "../Interaction/SelectionManager.js";
+import { cellHeight, cellWidth, totalVisibleCols, totalVisibleRows } from "../Utils/GlobalVariables.js";
 
 /**
  * Class responsible for rendering the main grid canvas including cells, grid lines, and cell data.
@@ -12,15 +11,6 @@ export class GridCanvas {
   /** @type {HTMLCanvasElement} The canvas element used for grid drawing */
   canvas: HTMLCanvasElement;
 
-  /** @type {number} Default width of each cell */
-  cellWidth: number = 100;
-  /** @type {number} Default height of each cell */
-  cellHeight: number = 24;
-
-  /** @type {number} Total number of columns in the grid */
-  totalCols: number = 20;
-  /** @type {number} Total number of rows in the grid */
-  totalRows: number = 100;
 
   /** @type {number} Width of the entire grid in pixels */
   width: number;
@@ -40,8 +30,8 @@ export class GridCanvas {
     this.mainCanvasWrapper.appendChild(this.canvas);
 
     const ctx = this.canvas.getContext("2d") as CanvasRenderingContext2D;
-    this.height = this.cellHeight * this.totalRows;
-    this.width = this.cellWidth * this.totalCols;
+    this.height = cellHeight * totalVisibleRows;
+    this.width = cellWidth * totalVisibleCols;
     this.initCanvas(ctx);
     this.drawGrid(ctx, 0, 0);
   }
@@ -76,12 +66,12 @@ export class GridCanvas {
    */
   drawVerticalGridLines(ctx: CanvasRenderingContext2D, startCol: number) {
     let x = -0.5;
-    for (let col = startCol; col < startCol + this.totalCols; col++) {
-      const colWidth = colData.get(col)?.width ?? this.cellWidth;
+    for (let col = startCol; col < startCol + totalVisibleCols; col++) {
+      const colWidth = colData.get(col)?.width ?? cellWidth;
       let lineHeight = 0;
 
-      let startMin = Math.min(colObj.ColSelectionStart, colObj.ColSelectionEnd);
-      let startMax = Math.max(colObj.ColSelectionStart, colObj.ColSelectionEnd);
+      let startMin = Math.min(selectionManager.ColSelectionStart, selectionManager.ColSelectionEnd);
+      let startMax = Math.max(selectionManager.ColSelectionStart, selectionManager.ColSelectionEnd);
 
       if (ColData.getSelectedCol() == col || startMin == col) {
         lineHeight = 1.3;
@@ -111,9 +101,9 @@ export class GridCanvas {
    * @param {number} startCol - Starting column index.
    */
   drawHorizontalGridLines(ctx: CanvasRenderingContext2D, startRow: number) {
-    let y = -0.5;
-    for (let row = startRow; row <= startRow + this.totalRows; row++) {
-      const rowHeight = rowData.get(row)?.height ?? this.cellHeight;
+    let y = 0.5;
+    for (let row = startRow; row <= startRow + totalVisibleRows; row++) {
+      const rowHeight = rowData.get(row)?.height ?? cellHeight;
       let lineHeight = 0;
 
       let startMin = Math.min(selectionManager.RowSelectionStart, selectionManager.RowSelectionEnd);
@@ -149,14 +139,14 @@ export class GridCanvas {
   drawCellData(ctx: CanvasRenderingContext2D, startRow: number, startCol: number) {
     let yPos = 0;
 
-    for (let r = 0; r < this.totalRows; r++) {
+    for (let r = 0; r < totalVisibleRows; r++) {
       const rowIndex = startRow + r;
-      const rowHeight = rowData.get(rowIndex)?.height ?? this.cellHeight;
+      const rowHeight = rowData.get(rowIndex)?.height ?? cellHeight;
 
       let xPos = 0;
-      for (let c = 0; c < this.totalCols; c++) {
+      for (let c = 0; c < totalVisibleCols; c++) {
         const colIndex = startCol + c;
-        const colWidth = colData.get(colIndex)?.width ?? this.cellWidth;
+        const colWidth = colData.get(colIndex)?.width ?? cellWidth;
 
         let text;
         if (cellData.has(rowIndex + 1, colIndex + 1)) {
@@ -187,8 +177,8 @@ export class GridCanvas {
         }
         let startRowMin = Math.min(selectionManager.RowSelectionStart, selectionManager.RowSelectionEnd);
         let startRowMax = Math.max(selectionManager.RowSelectionStart, selectionManager.RowSelectionEnd);
-        let startColMin = Math.min(colObj.ColSelectionStart, colObj.ColSelectionEnd);
-        let startColMax = Math.max(colObj.ColSelectionStart, colObj.ColSelectionEnd);
+        let startColMin = Math.min(selectionManager.ColSelectionStart, selectionManager.ColSelectionEnd);
+        let startColMax = Math.max(selectionManager.ColSelectionStart, selectionManager.ColSelectionEnd);
         if (
           (startRowIndex <= rowIndex)
           && (endRowIndex >= rowIndex)
@@ -241,14 +231,14 @@ export class GridCanvas {
   }
   drawCellSelection(ctx: CanvasRenderingContext2D, startRow: number, startCol: number) {
 
-    let yPos = 0;
-    for (let r = 0; r < 40; r++) {
+    let yPos = 0.5;
+    for (let r = 0; r < totalVisibleRows; r++) {
       const rowIndex = startRow + r;
-      const rowHeight = rowData.get(rowIndex)?.height ?? this.cellHeight;
-      let xPos = 0;
-      for (let c = 0; c < 20; c++) {
+      const rowHeight = rowData.get(rowIndex)?.height ?? cellHeight;
+      let xPos = 0.5;
+      for (let c = 0; c < totalVisibleCols; c++) {
         const colIndex = startCol + c;
-        const colWidth = colData.get(colIndex)?.width ?? this.cellWidth;
+        const colWidth = colData.get(colIndex)?.width ?? cellWidth;
 
         const selectedCells = selectionManager.getCellSelection;
         if (selectedCells.startRow > selectedCells.endRow) {
@@ -265,8 +255,8 @@ export class GridCanvas {
         ) {
           // Start Vertical Line
           ctx.beginPath();
-          ctx.moveTo(xPos, yPos - 1);
-          ctx.lineTo(xPos, yPos + rowHeight + 1);
+          ctx.moveTo(xPos, yPos );
+          ctx.lineTo(xPos, yPos + rowHeight);
           ctx.lineWidth = 2;
           ctx.strokeStyle = "#137E43";
           ctx.stroke();
@@ -280,8 +270,8 @@ export class GridCanvas {
 
           // End Vertical Line
           ctx.beginPath();
-          ctx.moveTo(xPos + colWidth , yPos - 1);
-          ctx.lineTo(xPos + colWidth, yPos + rowHeight + 1);
+          ctx.moveTo(xPos + colWidth - 1, yPos);
+          ctx.lineTo(xPos + colWidth - 1, yPos + rowHeight );
           ctx.lineWidth = 2;
           ctx.strokeStyle = "#137E43";
           ctx.stroke();
@@ -294,8 +284,8 @@ export class GridCanvas {
 
           // Start Bottom Horizonal Line
           ctx.beginPath();
-          ctx.moveTo(xPos, yPos + rowHeight );
-          ctx.lineTo(xPos + colWidth, yPos + rowHeight );
+          ctx.moveTo(xPos, yPos + rowHeight - 1);
+          ctx.lineTo(xPos + colWidth, yPos + rowHeight - 1);
           ctx.lineWidth = 2;
           ctx.strokeStyle = "#137E43";
           ctx.stroke();
@@ -307,8 +297,8 @@ export class GridCanvas {
         ) {
           // Start Horizontal Line
           ctx.beginPath();
-          ctx.moveTo(xPos, yPos);
-          ctx.lineTo(xPos + colWidth, yPos);
+          ctx.moveTo(xPos, yPos + 1);
+          ctx.lineTo(xPos + colWidth, yPos + 1);
           ctx.lineWidth = 2;
           ctx.strokeStyle = "#137E43";
           ctx.stroke();

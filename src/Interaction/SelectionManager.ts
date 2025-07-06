@@ -1,6 +1,7 @@
+import { excelRenderer } from "../Core/ExcelRenderer.js";
 import { ColData, colData } from "../DataStructures/ColData.js";
 import { RowData, rowData } from "../DataStructures/RowData.js";
-import { excelRenderer } from "../main.js";
+import { cellHeight, cellWidth, ExcelLeftOffset, ExcelTopOffset } from "../Utils/GlobalVariables.js";
 
 /**
  * Manages input editing within the grid cells.
@@ -39,11 +40,10 @@ export class SelectionManager {
     public RowSelectionEnd = -100
     public RowSelectionStatus = false
 
-    /** Default Row Height */
-    private defaultRowHeight = 24;
+    public ColSelectionStart = -100
+    public ColSelectionEnd = -100
+    public ColSelectionStatus = false
 
-    /** Default Width Height */
-    private defaultColWidth = 100;
 
     private selectingMultipleCells: boolean = false;
 
@@ -81,6 +81,19 @@ export class SelectionManager {
             startRow: this.RowSelectionStart,
             endRow: this.RowSelectionEnd,
             selectionState: this.RowSelectionStatus,
+        }
+    }
+    set ColSelection(data: {startCol: number, endCol: number, selectionState: boolean}){
+            this.ColSelectionStart = data.startCol;
+            this.ColSelectionEnd = data.endCol;
+            this.ColSelectionStatus = data.selectionState;
+    }
+
+    get ColSelection(){
+        return {
+            startCol: this.ColSelectionStart,
+            endCol: this.ColSelectionEnd,
+            selectionState: this.ColSelectionStatus,
         }
     }
 
@@ -122,8 +135,8 @@ export class SelectionManager {
         const scrollLeft = this.scrollDiv.scrollLeft;
         const scrollTop = this.scrollDiv.scrollTop;
 
-        const clientX = e.clientX + scrollLeft - 50; // offset for col label
-        const clientY = e.clientY + scrollTop - 25; // offset for row label
+        const clientX = e.clientX + scrollLeft - ExcelLeftOffset; // offset for col label
+        const clientY = e.clientY + scrollTop - ExcelTopOffset; // offset for row label
 
         RowData.setSelectedRow(null);
         ColData.setSelectedCol(null);
@@ -131,16 +144,16 @@ export class SelectionManager {
         // === Calculate Column ===
         let x = 0, col = 0;
         while (x <= clientX) {
-            const colWidth = colData.get(col)?.width ?? this.defaultColWidth;
+            const colWidth = colData.get(col)?.width ?? cellWidth;
             if (x + colWidth > clientX) break;
             x += colWidth;
             col++;
         }
         
         // === Calculate Row ===
-        let y = 0, row = 0;
+        let y = 50, row = 0;
         while (y <= clientY) {
-            const rowHeight = rowData.get(row)?.height ?? this.defaultRowHeight;
+            const rowHeight = rowData.get(row)?.height ?? cellHeight;
             if (y + rowHeight > clientY) break;
             y += rowHeight;
             row++;
@@ -160,9 +173,8 @@ export class SelectionManager {
     }
 }
 
-
-export const selectionManager = new SelectionManager();
-
 // selectionManager.set(3, 0, 2, 2, true);
 
-selectionManager.RowSelection = {startRow: 4, endRow: 7, selectionState: false}
+// selectionManager.ColSelection = {startCol: 1,endCol: 3, selectionState: false};
+
+export const selectionManager = new SelectionManager();

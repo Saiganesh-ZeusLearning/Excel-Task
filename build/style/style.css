@@ -2,6 +2,7 @@
 body {
   margin: 0;
   box-sizing: border-box;
+  overflow: hidden;
 }
 
 .wrapper {
@@ -11,9 +12,34 @@ body {
   height: fit-content;
 }
 
+.excel-header {
+  height: 50px;
+  background-color: #F5F5F5;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.right-elements {
+  display: flex;
+  gap: 20px;
+}
+
+.inputfile {
+  width: 200px;
+}
+
+.nav-row-col {
+  border-radius: 3px;
+  width: 100px;
+  border: 1px solid grey;
+  margin-left: 5px;
+}
+
 .scrollable {
   width: 100vw;
-  height: 100vh;
+  height: calc(100vh - 50px);
   overflow: auto;
   position: relative;
 }
@@ -52,14 +78,14 @@ body {
 
 .left-corner {
   position: fixed;
-  top: 0px;
+  top: 50px;
   left: 0px;
   z-index: 21;
   height: 23px;
-  width: 49px;
+  width: 48px;
   border-bottom: solid 2px #BDBDBD;
   border-right: solid 2px #BDBDBD;
-  background-color: rgb(255, 253, 253);
+  background-color: #F5F5F5;
 }
 
 .input-selection {

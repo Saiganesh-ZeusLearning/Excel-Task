@@ -1,7 +1,7 @@
 /**
  * Class to manage and manipulate cell data using a `${row}_${col}` key format.
  */
-class CellData {
+export class CellData {
   private data: { [key: `${number}_${number}`]: string } = {};
 
   /** Sets a value at given row and column */
@@ -58,40 +58,37 @@ class CellData {
     }
   }
   /** Internal helper to recursively shift cell data right */
-private shiftCellRight(row: number, col: number, value: string): void {
-  const nextCol = col + 1;
+  private shiftCellRight(row: number, col: number, value: string): void {
+    const nextCol = col + 1;
 
-  if (this.has(row, nextCol)) {
-    const nextValue = this.get(row, nextCol)!;
-    this.shiftCellRight(row, nextCol, nextValue);
+    if (this.has(row, nextCol)) {
+      const nextValue = this.get(row, nextCol)!;
+      this.shiftCellRight(row, nextCol, nextValue);
+    }
+
+    this.set(row, nextCol, value);
+    this.delete(row, col);
   }
 
-  this.set(row, nextCol, value);
-  this.delete(row, col);
-}
+  /** Public method to shift all cells from a given column right by 1 */
+  insertColumnAt(col: number): void {
+    const entriesToShift = this.entries()
+      .map(([key, value]) => {
+        const [r, c] = key.split("_").map(Number);
+        return { row: r, col: c, value };
+      })
+      .filter(({ col: c }) => c >= col)
+      .sort((a, b) => b.col - a.col); // right-to-left
 
-/** Public method to shift all cells from a given column right by 1 */
-insertColumnAt(col: number): void {
-  const entriesToShift = this.entries()
-    .map(([key, value]) => {
-      const [r, c] = key.split("_").map(Number);
-      return { row: r, col: c, value };
-    })
-    .filter(({ col: c }) => c >= col)
-    .sort((a, b) => b.col - a.col); // right-to-left
-
-  for (const { row: r, col: c, value } of entriesToShift) {
-    this.shiftCellRight(r, c, value);
+    for (const { row: r, col: c, value } of entriesToShift) {
+      this.shiftCellRight(r, c, value);
+    }
   }
-}
 
 }
-
-
 export const cellData = new CellData();
 
-cellData.set(6, 2, "123");
-cellData.set(7, 2, "hello");
-
+// cellData.set(6, 2, "123");
+// cellData.set(7, 2, "hello");
 // cellData.insertRowAt(6)
 
