@@ -2,6 +2,7 @@ import { excelRenderer } from "../Core/ExcelRenderer.js";
 import { cellData } from "../DataStructures/CellData.js";
 import { ColData, colData } from "../DataStructures/ColData.js";
 import { RowData, rowData } from "../DataStructures/RowData.js";
+import { commandManager } from "../main.js";
 import { cellHeight, cellWidth, ExcelLeftOffset, ExcelTopOffset } from "../Utils/GlobalVariables.js";
 import { selectionManager } from "./SelectionManager.js";
 
@@ -87,6 +88,8 @@ export class InputManager {
 
     RowData.setSelectedRow(null);
     ColData.setSelectedCol(null);
+    selectionManager.ColSelectionStatus = false;
+    selectionManager.RowSelectionStatus = false;
 
     let x = 0, col = 0;
     let colWidth: number = 0;
@@ -133,8 +136,7 @@ export class InputManager {
   }
 
   private handleKeyDown(e: KeyboardEvent) {
-    this.saveCurrentCellValue();
-
+    
     if (e.shiftKey) {
       if (e.key === 'ArrowDown') this.shiftRow++;
       else if (e.key === 'ArrowUp') this.shiftRow--;
@@ -142,28 +144,34 @@ export class InputManager {
       else if (e.key === 'ArrowLeft') this.shiftCol--;
       selectionManager.set(this.prevRow, this.prevCol, this.prevRow + this.shiftRow, this.prevCol + this.shiftCol, true);
       RowData.setSelectedCellRow(this.prevRow + this.shiftRow);
+      this.saveCurrentCellValue();
       excelRenderer.render();
       return;
     }
-
+    
     if (e.key === 'Enter' && e.shiftKey && this.prevRow > 0) {
       const above = rowData.get(this.prevRow - 1)?.height ?? cellHeight;
+      this.saveCurrentCellValue();
       this.prevTop -= above;
       this.prevRow--;
     } else if (e.key === 'Enter' || e.key === 'ArrowDown') {
       const curr = rowData.get(this.prevRow)?.height ?? cellHeight;
+      this.saveCurrentCellValue();
       this.prevTop += curr;
       this.prevRow++;
     } else if (e.key === 'ArrowUp' && this.prevRow > 0) {
+      this.saveCurrentCellValue();
       const above = rowData.get(this.prevRow - 1)?.height ?? cellHeight;
       this.prevTop -= above;
       this.prevRow--;
     } else if (e.key === 'ArrowRight') {
       const curr = colData.get(this.prevCol)?.width ?? cellWidth;
+      this.saveCurrentCellValue();
       this.prevLeft += curr;
       this.prevCol++;
     } else if (e.key === 'ArrowLeft' && this.prevCol > 0) {
       const left = colData.get(this.prevCol - 1)?.width ?? cellWidth;
+      this.saveCurrentCellValue();
       this.prevLeft -= left;
       this.prevCol--;
     } else {
@@ -173,7 +181,7 @@ export class InputManager {
 
     this.resetShift();
     this.inputDiv.style.caretColor = "transparent";
-    
+
     selectionManager.set(this.prevRow, this.prevCol, this.prevRow, this.prevCol, true);
     RowData.setSelectedCellRow(this.prevRow);
 
@@ -184,6 +192,9 @@ export class InputManager {
 
   private saveCurrentCellValue() {
     if (this.inputDiv.value !== "") {
+
+      // 1. Edit a cell
+      commandManager.pushCellEditCommand(this.inputDiv.value, cellData.get(this.prevRow + 1, this.prevCol + 1) ?? "", this.prevRow + 1, this.prevCol + 1);
       cellData.set(this.prevRow + 1, this.prevCol + 1, this.inputDiv.value);
     }
   }

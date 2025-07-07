@@ -38,4 +38,4 @@ function generateDummyUserData(count: number, filePath: string): void {
 }
 
 // Example usage
-generateDummyUserData(100, 'data.json');
+generateDummyUserData(50000, 'data.json');

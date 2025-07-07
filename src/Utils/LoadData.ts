@@ -16,20 +16,20 @@ export class LoadDataManager {
     private initEvents(): void {
         this.fileInput.addEventListener('change', (e) => this.handleFileInput(e));
     }
-    writeData(data: User[]) {
+    writeData(data: any) {
         let i = 1;
         for (const key in data[0]) {
             cellData.set(1, i, key);
             i++;
         }
-        console.log(data.length);
 
-        for (let i = 0; i <= data.length; i++) {
-            Object.keys(data).forEach((key: any) => {
-                console.log(key, data[key]);
-            });
+        for (let i = 0; i < data.length; i++) {
+            let j = 1;
+            for (const key in data[0]) {
+                cellData.set(i+1, j, data[i][key]);
+                j++;
+            }
         }
-        console.log("done")
         excelRenderer.render();
     }
 

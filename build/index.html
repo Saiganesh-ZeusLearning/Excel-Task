@@ -10,12 +10,17 @@
 
 <body>
     <div class="excel-header">
-        <div>
+        <div class="left-elements">
             <input type="text" class="nav-row-col">
+            <select name="formulas" id="formulas">
+                <option value="sum" default>Sum</option>
+                <option value="average" default>Average</option>
+                <option value="min" default>Min</option>
+                <option value="max" default>Max</option>
+            </select>
+            <button class="calculateBtn">Calculate</button>
         </div>
         <div class="right-elements">
-            <button class="redo">Redo</button>
-            <button class="undo">Undo</button>
             <input type="file" class="inputfile">
         </div>
     </div>

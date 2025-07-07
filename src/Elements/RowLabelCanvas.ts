@@ -3,7 +3,7 @@ import { cellData } from "../DataStructures/CellData.js";
 import { ColData } from "../DataStructures/ColData.js";
 import { RowData, rowData } from "../DataStructures/RowData.js";
 import { selectionManager } from "../Interaction/SelectionManager.js";
-import { inputManager } from "../main.js";
+import { commandManager, inputManager } from "../main.js";
 import { CanvasLeftOffset, cellHeight, totalVisibleRows } from "../Utils/GlobalVariables.js";
 
 /**
@@ -33,6 +33,11 @@ export class RowLabelCanvas {
   private targetRow = -1;
   private skipClick = false;
 
+  isSelectingRow: boolean;
+
+  oldValue: number;
+  newValue: number;
+
   /**
    * Initializes the RowLabelCanvas class
    * @param rowId - ID of the canvas element in DOM
@@ -45,6 +50,9 @@ export class RowLabelCanvas {
 
     const ctx = this.canvas.getContext("2d") as CanvasRenderingContext2D;
     this.startRow = 0;
+    this.oldValue = 0
+    this.newValue = 0
+    this.isSelectingRow = false;
 
 
     // === Events ===
@@ -52,7 +60,6 @@ export class RowLabelCanvas {
     this.canvas.addEventListener("mousedown", this.handleMouseDownEventSelection.bind(this));
     window.addEventListener("mousemove", this.handleMouseMove.bind(this));
     window.addEventListener("mouseup", this.handleMouseUp.bind(this));
-
 
     this.initCanvas(ctx);
     this.drawRows(ctx, rowId);
@@ -87,7 +94,7 @@ export class RowLabelCanvas {
     ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     this.startRow = startRow;
 
-    let y = 0.5;
+    let y = -0.5;
     for (let row = startRow; row < totalVisibleRows + startRow; row++) {
       const rowInfo = rowData.get(row);
       const nxtHeight = rowInfo ? rowInfo.height : cellHeight;
@@ -156,9 +163,9 @@ export class RowLabelCanvas {
         
         // Vertical separator line
         ctx.beginPath();
-        ctx.moveTo(49, y - 1);
-        ctx.lineTo(49, y + nxtHeight + 1);
-        ctx.lineWidth = 0.5;
+        ctx.moveTo(49.5, y - 1);
+        ctx.lineTo(49.5, y + nxtHeight + 1);
+        ctx.lineWidth = 1;
         ctx.strokeStyle = "#ddd";
         ctx.stroke();
         
@@ -204,6 +211,8 @@ export class RowLabelCanvas {
         selectionManager.RowSelectionEnd = selectionManager.getCellSelection.currRow;
         RowData.setSelectedCellRow(selectionManager.RowSelectionStart);
         ColData.setSelectedCellCol(0);
+        this.isSelectingRow = true;            
+        selectionManager.ColSelectionStatus = false;
         selectionManager.RowSelectionStatus = true;
         selectionManager.set(selectionManager.RowSelectionStart, 0, selectionManager.RowSelectionStart, 0, true);
         inputManager.setInputLocation(selectionManager.RowSelectionStart, 0)
@@ -236,6 +245,7 @@ export class RowLabelCanvas {
         this.isResizing = true;
         this.resizeStartY = offsetY;
         this.targetRow = row;
+        this.oldValue = rowData.get(this.targetRow)?.height ?? 24;
         this.skipClick = true;
         break;
       }
@@ -283,7 +293,7 @@ export class RowLabelCanvas {
       y += height;
     }
 
-    if (selectionManager.RowSelectionStatus) {
+    if (this.isSelectingRow) {
       selectionManager.RowSelectionEnd = selectionManager.getCellSelection.currRow;
       excelRenderer.render();
     }
@@ -298,6 +308,7 @@ export class RowLabelCanvas {
       const diff = offsetY - this.resizeStartY;
       const currentHeight = rowData.get(this.targetRow)?.height ?? cellHeight;
       const newHeight = Math.max(20, currentHeight + diff);
+      this.newValue = newHeight;
 
       rowData.set(this.targetRow, newHeight);
       this.resizeStartY = offsetY;
@@ -311,9 +322,12 @@ export class RowLabelCanvas {
    */
   private handleMouseUp() {
     this.isResizing = false;
-    selectionManager.RowSelectionStatus = false;
-    selectionManager.RowSelectionStart = -100;
-    selectionManager.RowSelectionEnd = -100;
+    this.isSelectingRow = false;
+    if(this.oldValue !== this.newValue){
+      commandManager.pushRowResizeCommand(this.newValue, this.oldValue, this.targetRow);
+      this.oldValue = 0;
+      this.newValue = 0;
+    }
     this.targetRow = -1;
   }
 }
