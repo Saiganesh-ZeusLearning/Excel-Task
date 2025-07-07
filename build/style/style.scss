@@ -34,6 +34,14 @@ body {
     margin-left: 5px;
 }
 
+.output{
+    height: 20px;
+    width: 60px;
+    background-color: white;
+    border: 1px solid black;
+    border-radius: 2px;
+}
+
 .scrollable{
     width: 100vw;
     height: calc(100vh - 50px);

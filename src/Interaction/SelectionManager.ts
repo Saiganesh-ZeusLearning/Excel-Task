@@ -138,9 +138,6 @@ export class SelectionManager {
         const clientX = e.clientX + scrollLeft - ExcelLeftOffset; // offset for col label
         const clientY = e.clientY + scrollTop - ExcelTopOffset; // offset for row label
 
-        RowData.setSelectedRow(null);
-        ColData.setSelectedCol(null);
-
         // === Calculate Column ===
         let x = 0, col = 0;
         while (x <= clientX) {
@@ -166,9 +163,6 @@ export class SelectionManager {
 
         this.endRow = this.currRow;
         this.endCol = this.currCol;
-        // Set selected cell
-        RowData.setSelectedCellRow(row);
-        ColData.setSelectedCellCol(col);
         excelRenderer.render();
     }
 }

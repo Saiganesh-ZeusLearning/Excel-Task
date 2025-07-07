@@ -90,40 +90,6 @@ export class RowData {
     this.set(row, referenceHeight);
   }
 
-
-  // --- Static Handlers for Row Selection ---
-
-  /**
-   * Sets the row index of the selected cell.
-   * @param {number | null} row - Row index or null to clear.
-   */
-  static setSelectedCellRow(row: number | null) {
-    RowData.selectedCellRow = row;
-  }
-
-  /**
-   * Gets the row index of the selected cell.
-   * @returns {number | null} Selected cell row index.
-   */
-  static getSelectedCellRow(): number | null {
-    return RowData.selectedCellRow;
-  }
-
-  /**
-   * Sets the selected row (for full row highlight).
-   * @param {number | null} row - Row index or null to clear.
-   */
-  static setSelectedRow(row: number | null) {
-    RowData.selectedRow = row;
-  }
-
-  /**
-   * Gets the currently selected row (for full row highlight).
-   * @returns {number | null} Selected row index.
-   */
-  static getSelectedRow(): number | null {
-    return RowData.selectedRow;
-  }
 }
 
 /** Singleton instance of the RowData class */

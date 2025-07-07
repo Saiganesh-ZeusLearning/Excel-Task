@@ -90,37 +90,6 @@ export class ColData {
     return Object.entries(this.cols).map(([col, data]) => [Number(col), data]);
   }
 
-  /**
-   * Sets the selected column (for full column highlight).
-   * @param {number | null} col - Column index or null to clear selection.
-   */
-  static setSelectedCol(col: number | null) {
-    ColData.selectedCol = col;
-  }
-
-  /**
-   * Gets the currently selected column (for full column highlight).
-   * @returns {number | null} Selected column index.
-   */
-  static getSelectedCol(): number | null {
-    return ColData.selectedCol;
-  }
-
-  /**
-   * Sets the column of the selected cell.
-   * @param {number | null} col - Column index or null to clear selection.
-   */
-  static setSelectedCellCol(col: number | null) {
-    ColData.selectedCellCol = col;
-  }
-
-  /**
-   * Gets the column of the selected cell.
-   * @returns {number | null} Selected cell column index.
-   */
-  static getSelectedCellCol(): number | null {
-    return ColData.selectedCellCol;
-  }
 }
 
 /** Singleton instance of the ColData class */

@@ -4,7 +4,7 @@ import { ColData, colData } from "../DataStructures/ColData.js";
 import { RowData } from "../DataStructures/RowData.js";
 import { selectionManager } from "../Interaction/SelectionManager.js";
 import {  commandManager, inputManager } from "../main.js";
-import { CanvasTopOffset, cellWidth, totalVisibleCols } from "../Utils/GlobalVariables.js";
+import { CanvasTopOffset, cellWidth, ColLabel, totalVisibleCols } from "../Utils/GlobalVariables.js";
 
 /**
  * Class responsible for rendering and interacting with the column label canvas (A, B, C...).
@@ -98,21 +98,6 @@ export class ColumnLabelCanvas {
   drawColumns(ctx: CanvasRenderingContext2D, startCol: number): void {
     ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-    /**
-     * Converts a column number to its corresponding A-Z label.
-     * @param {number} num - Column number (1-based).
-     * @returns {string} Alphabetical label (e.g., A, B, ..., AA, AB, etc.)
-     */
-    function ColLabel(num: number): string {
-      let label = "";
-      num--;
-      while (num >= 0) {
-        label = String.fromCharCode("A".charCodeAt(0) + (num % 26)) + label;
-        num = Math.floor(num / 26) - 1;
-      }
-      return label;
-    }
-
     let x = -0.5;
 
     for (let col = startCol; col <= startCol + totalVisibleCols; col++) {
@@ -134,7 +119,7 @@ export class ColumnLabelCanvas {
       let startMax = Math.max(selectionManager.ColSelectionStart, selectionManager.ColSelectionEnd);
       let colSelectionState = selectionManager.ColSelectionStatus;
       // Highlight logic
-      if (ColData.getSelectedCol() === col || (colSelectionState && startMin <= col && startMax >= col)) {
+      if ( (colSelectionState && startMin <= col && startMax >= col)) {
         ctx.fillStyle = "#107C41";
         ctx.fillRect(x, 0, nxtWidth, 24);
         ctx.fillStyle = "white";
@@ -233,8 +218,6 @@ export class ColumnLabelCanvas {
         selectionManager.RowSelectionStatus = false;
         selectionManager.ColSelectionStart = selectionManager.getCellSelection.currCol;
         selectionManager.ColSelectionEnd = selectionManager.getCellSelection.currCol;
-        ColData.setSelectedCellCol(selectionManager.ColSelectionStart);
-        RowData.setSelectedCellRow(0);
         selectionManager.ColSelectionStatus = true;
         selectionManager.set(0, selectionManager.ColSelectionStart, 0, selectionManager.ColSelectionStart, true);
         inputManager.setInputLocation(0, selectionManager.ColSelectionStart);
@@ -274,10 +257,8 @@ export class ColumnLabelCanvas {
       if (Math.abs(offsetX - (x + width)) <= 4 && offsetY < 9) {
         this.skipClick = true;
         cellData.insertColumnAt(col + 2);
-        ColData.setSelectedCol(col + 1);
         colData.insertColumnAt(col + 1);
         inputManager.setInputLocation(0,col);
-        ColData.setSelectedCellCol(null);
         excelRenderer.render();
         break;
       }

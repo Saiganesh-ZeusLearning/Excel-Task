@@ -111,7 +111,7 @@ export class RowLabelCanvas {
       let startMax = Math.max(selectionManager.RowSelectionStart, selectionManager.RowSelectionEnd);
       let rowSelectionState = selectionManager.RowSelectionStatus;
       // === Row Number Label Highlight ===
-      if (((RowData.getSelectedRow() == row) || (rowSelectionState && startMin <= row && startMax >= row))) {
+      if (( (rowSelectionState && startMin <= row && startMax >= row))) {
         ctx.fillStyle = "#107C41";
         ctx.fillRect(0, y, 100, nxtHeight);
         ctx.fillStyle = "white";
@@ -133,7 +133,7 @@ export class RowLabelCanvas {
         ctx.lineTo(this.canvas.width - 2, y);
         ctx.stroke();
         
-      } else if ((RowData.getSelectedCellRow() == row || ColData.getSelectedCol()) || (selectionState && startRowIndex <= row && endRowIndex >= row)) {
+      } else if ((selectionState && startRowIndex <= row && endRowIndex >= row)) {
         ctx.fillStyle = "#A0D8B9";
         ctx.fillRect(0, y, 100, nxtHeight);
         ctx.font = "12px sans-serif";
@@ -141,10 +141,10 @@ export class RowLabelCanvas {
         
         // Vertical separator line
         ctx.beginPath();
-        ctx.moveTo(49, y - 1);
-        ctx.lineTo(49, y + nxtHeight + 1);
+        ctx.moveTo(49, y);
+        ctx.lineTo(49, y + nxtHeight);
         ctx.lineWidth = 2;
-        ctx.strokeStyle = "#0F703B";
+        ctx.strokeStyle = "#107C41";
         ctx.stroke();
         
         // Horizontal separator line
@@ -209,8 +209,6 @@ export class RowLabelCanvas {
         inputManager.inputDiv.style.left = `${CanvasLeftOffset}px`;
         selectionManager.RowSelectionStart = selectionManager.getCellSelection.currRow;
         selectionManager.RowSelectionEnd = selectionManager.getCellSelection.currRow;
-        RowData.setSelectedCellRow(selectionManager.RowSelectionStart);
-        ColData.setSelectedCellCol(0);
         this.isSelectingRow = true;            
         selectionManager.ColSelectionStatus = false;
         selectionManager.RowSelectionStatus = true;
@@ -252,9 +250,7 @@ export class RowLabelCanvas {
       if (Math.abs(offsetY - (y + height)) <= 4 && offsetX < 20) {
         this.skipClick = true;
         cellData.insertRowAt(row + 2);
-        RowData.setSelectedRow(row + 1);
         rowData.insertRowAt(row + 1);
-        RowData.setSelectedCellRow(null);
         excelRenderer.render();
         break;
       }

@@ -1,9 +1,9 @@
 import { excelRenderer } from "../Core/ExcelRenderer.js";
 import { cellData } from "../DataStructures/CellData.js";
-import { ColData, colData } from "../DataStructures/ColData.js";
-import { RowData, rowData } from "../DataStructures/RowData.js";
+import { colData } from "../DataStructures/ColData.js";
+import { rowData } from "../DataStructures/RowData.js";
 import { commandManager } from "../main.js";
-import { cellHeight, cellWidth, ExcelLeftOffset, ExcelTopOffset } from "../Utils/GlobalVariables.js";
+import { cellHeight, cellWidth, ColLabel, ExcelLeftOffset, ExcelTopOffset } from "../Utils/GlobalVariables.js";
 import { selectionManager } from "./SelectionManager.js";
 
 /**
@@ -12,6 +12,7 @@ import { selectionManager } from "./SelectionManager.js";
  */
 export class InputManager {
   public inputDiv: HTMLInputElement;
+  public navRowCol: HTMLInputElement;
   public scrollDiv: HTMLElement;
   public mainCanvas: HTMLElement;
 
@@ -30,6 +31,7 @@ export class InputManager {
     this.scrollDiv = document.querySelector(".scrollable") as HTMLElement;
     this.mainCanvas = document.querySelector(".main-canvas") as HTMLElement;
     this.inputDiv = document.querySelector(".input-selection") as HTMLInputElement;
+    this.navRowCol = document.querySelector(".nav-row-col") as HTMLInputElement;
     this.width = window.innerWidth;
     this.height = window.innerHeight;
     this.shiftRow = 0;
@@ -61,15 +63,13 @@ export class InputManager {
     if (this.prevTop !== cellTop || this.prevLeft !== cellLeft) {
       this.saveCurrentCellValue();
       this.inputDiv.value = cellData.get(setRow + 1, setCol + 1) ?? "";
+      this.navRowCol.value = (ColLabel(setCol + 1) + (setRow + 1).toString()).toString();
 
       this.prevRow = setRow;
       this.prevCol = setCol;
       this.prevTop = cellTop;
       this.prevLeft = cellLeft;
     }
-
-    RowData.setSelectedCellRow(setRow);
-    ColData.setSelectedCellCol(setCol);
 
     this.inputDiv.style.height = `${(rowData.get(setRow)?.height ?? cellHeight) - 14}px`;
     this.inputDiv.style.width = `${(colData.get(setCol)?.width ?? cellWidth) - 12}px`;
@@ -86,8 +86,6 @@ export class InputManager {
     const clientX = e.clientX + scrollLeft - ExcelLeftOffset;
     const clientY = e.clientY + scrollTop - ExcelTopOffset;
 
-    RowData.setSelectedRow(null);
-    ColData.setSelectedCol(null);
     selectionManager.ColSelectionStatus = false;
     selectionManager.RowSelectionStatus = false;
 
@@ -108,8 +106,6 @@ export class InputManager {
       row++;
     }
 
-    RowData.setSelectedCellRow(row);
-    ColData.setSelectedCellCol(col);
     selectionManager.set(row, col, row, col, true);
 
     const cellTop = y + ExcelTopOffset;
@@ -136,19 +132,18 @@ export class InputManager {
   }
 
   private handleKeyDown(e: KeyboardEvent) {
-    
+
     if (e.shiftKey) {
       if (e.key === 'ArrowDown') this.shiftRow++;
       else if (e.key === 'ArrowUp') this.shiftRow--;
       else if (e.key === 'ArrowRight') this.shiftCol++;
       else if (e.key === 'ArrowLeft') this.shiftCol--;
       selectionManager.set(this.prevRow, this.prevCol, this.prevRow + this.shiftRow, this.prevCol + this.shiftCol, true);
-      RowData.setSelectedCellRow(this.prevRow + this.shiftRow);
       this.saveCurrentCellValue();
       excelRenderer.render();
       return;
     }
-    
+
     if (e.key === 'Enter' && e.shiftKey && this.prevRow > 0) {
       const above = rowData.get(this.prevRow - 1)?.height ?? cellHeight;
       this.saveCurrentCellValue();
@@ -156,16 +151,19 @@ export class InputManager {
       this.prevRow--;
     } else if (e.key === 'Enter' || e.key === 'ArrowDown') {
       const curr = rowData.get(this.prevRow)?.height ?? cellHeight;
+      this.navRowCol.value = (ColLabel(this.prevCol + 1) + (this.prevRow + 2).toString()).toString();
       this.saveCurrentCellValue();
       this.prevTop += curr;
       this.prevRow++;
     } else if (e.key === 'ArrowUp' && this.prevRow > 0) {
       this.saveCurrentCellValue();
       const above = rowData.get(this.prevRow - 1)?.height ?? cellHeight;
+      this.navRowCol.value = (ColLabel(this.prevCol + 1) + (this.prevRow).toString()).toString();
       this.prevTop -= above;
       this.prevRow--;
     } else if (e.key === 'ArrowRight') {
       const curr = colData.get(this.prevCol)?.width ?? cellWidth;
+      this.navRowCol.value = (ColLabel(this.prevCol + 2) + (this.prevRow + 1).toString()).toString();
       this.saveCurrentCellValue();
       this.prevLeft += curr;
       this.prevCol++;
@@ -183,7 +181,6 @@ export class InputManager {
     this.inputDiv.style.caretColor = "transparent";
 
     selectionManager.set(this.prevRow, this.prevCol, this.prevRow, this.prevCol, true);
-    RowData.setSelectedCellRow(this.prevRow);
 
     this.updateScrollIfNeeded();
     this.updateInputBoxPosition();

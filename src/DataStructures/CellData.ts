@@ -88,7 +88,8 @@ export class CellData {
 }
 export const cellData = new CellData();
 
-// cellData.set(6, 2, "123");
-// cellData.set(7, 2, "hello");
+cellData.set(6, 3, "123");
+cellData.set(6, 2, "hello");
+cellData.set(6, 4, "395");
 // cellData.insertRowAt(6)
 

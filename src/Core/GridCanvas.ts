@@ -73,11 +73,11 @@ export class GridCanvas {
       let startMin = Math.min(selectionManager.ColSelectionStart, selectionManager.ColSelectionEnd);
       let startMax = Math.max(selectionManager.ColSelectionStart, selectionManager.ColSelectionEnd);
 
-      if (ColData.getSelectedCol() == col || (startMin == col && selectionManager.ColSelectionStatus)) {
+      if ((startMin == col && selectionManager.ColSelectionStatus)) {
         lineHeight = 1.3;
         ctx.strokeStyle = "green";
         ctx.lineWidth = 2;
-      } else if (ColData.getSelectedCol() == col - 1 || (startMax == col - 1 && selectionManager.ColSelectionStatus)) {
+      } else if ((startMax == col - 1 && selectionManager.ColSelectionStatus)) {
         lineHeight = -1.3;
         ctx.strokeStyle = "green";
         ctx.lineWidth = 2;
@@ -109,11 +109,11 @@ export class GridCanvas {
       let startMin = Math.min(selectionManager.RowSelectionStart, selectionManager.RowSelectionEnd);
       let startMax = Math.max(selectionManager.RowSelectionStart, selectionManager.RowSelectionEnd);
 
-      if ((RowData.getSelectedRow() == row) || (startMin == row && selectionManager.RowSelectionStatus)) {
+      if ((startMin == row && selectionManager.RowSelectionStatus)) {
         lineHeight = 1.5;
         ctx.strokeStyle = "green";
         ctx.lineWidth = 2;
-      } else if (RowData.getSelectedRow() == row  || (startMax == row - 1 && selectionManager.RowSelectionStatus)) {
+      } else if ( (startMax == row - 1 && selectionManager.RowSelectionStatus)) {
         lineHeight = -1.5;
         ctx.strokeStyle = "green";
         ctx.lineWidth = 2;
@@ -188,14 +188,12 @@ export class GridCanvas {
           && (endRowIndex >= rowIndex)
           && (startColIndex === colIndex)
           && selectedCells.selectionState
-          || (RowData.getSelectedRow() === rowIndex && colIndex !== 0)
           || (startRowMin <= rowIndex)
           && (startRowMax >= rowIndex)
           && selectionManager.RowSelectionStatus
           || (startColMin <= colIndex)
           && (startColMax >= colIndex)
           && selectionManager.ColSelectionStatus
-          || (ColData.getSelectedCol() === colIndex && rowIndex !== 0)
         ) {
           ctx.fillStyle = "#E8F2EC";
           ctx.fillRect(xPos, yPos, colWidth, rowHeight);
@@ -232,11 +230,11 @@ export class GridCanvas {
   }
   drawCellSelection(ctx: CanvasRenderingContext2D, startRow: number, startCol: number) {
 
-    let yPos = 0.5;
+    let yPos = -0.5;
     for (let r = 0; r < totalVisibleRows; r++) {
       const rowIndex = startRow + r;
       const rowHeight = rowData.get(rowIndex)?.height ?? cellHeight;
-      let xPos = 0.5;
+      let xPos = -0.5;
       for (let c = 0; c < totalVisibleCols; c++) {
         const colIndex = startCol + c;
         const colWidth = colData.get(colIndex)?.width ?? cellWidth;
@@ -256,8 +254,8 @@ export class GridCanvas {
         ) {
           // Start Vertical Line
           ctx.beginPath();
-          ctx.moveTo(xPos, yPos );
-          ctx.lineTo(xPos, yPos + rowHeight);
+          ctx.moveTo(xPos + 1, yPos );
+          ctx.lineTo(xPos + 1, yPos + rowHeight);
           ctx.lineWidth = 2;
           ctx.strokeStyle = "#137E43";
           ctx.stroke();
@@ -323,7 +321,7 @@ export class GridCanvas {
     ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
     this.drawCellData(ctx, startRow, startCol);
-    if (RowData.getSelectedRow() !== null) {
+    if (selectionManager.RowSelectionStatus) {
       this.drawVerticalGridLines(ctx, startCol);
       this.drawHorizontalGridLines(ctx, startRow);
     } else {
