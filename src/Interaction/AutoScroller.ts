@@ -1,9 +1,3 @@
-import { excelRenderer } from "../Core/ExcelRenderer.js";
-import { colData } from "../DataStructures/ColData.js";
-import { rowData } from "../DataStructures/RowData.js";
-import { cellHeight, cellWidth } from "../Utils/GlobalVariables.js";
-import { selectionManager } from "./SelectionManager.js";
-
 export class AutoScroller {
   private scrollableDiv: HTMLElement;
   private isSelecting: boolean = false;

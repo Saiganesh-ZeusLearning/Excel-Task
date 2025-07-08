@@ -1,8 +1,9 @@
-import { excelRenderer } from "../Core/ExcelRenderer.js";
+import { ExcelRenderer } from "../Core/ExcelRenderer.js";
 import { cellData } from "../DataStructures/CellData.js";
 import { rowData } from "../DataStructures/RowData.js";
-import { selectionManager } from "../Interaction/SelectionManager.js";
-import { commandManager, inputManager } from "../main.js";
+import { InputManager } from "../Interaction/InputManager.js";
+import { SelectionManager } from "../Interaction/SelectionManager.js";
+import { commandManager } from "../main.js";
 import { CanvasLeftOffset, cellHeight, totalVisibleRows } from "../Utils/GlobalVariables.js";
 
 /**
@@ -13,6 +14,9 @@ export class RowLabelCanvas {
   /** Canvas element for row labels */
   private canvas: HTMLCanvasElement;
   private inputDiv: HTMLInputElement;
+
+  private selectionManager: SelectionManager | null;
+  private inputManager: InputManager | null;
 
   /** Container element for the row label canvas */
   private rowWrapper: HTMLElement;
@@ -42,10 +46,12 @@ export class RowLabelCanvas {
    * Initializes the RowLabelCanvas class
    * @param rowId - ID of the canvas element in DOM
    */
-  constructor(rowId: number) {
+  constructor(selectionManager: SelectionManager) {
     this.rowWrapper = document.querySelector(".row-label-wrapper") as HTMLElement;
     this.canvas = document.createElement("canvas") as HTMLCanvasElement;
     this.inputDiv = document.querySelector(".input-selection") as HTMLInputElement;
+    this.selectionManager = selectionManager;
+    this.inputManager = null;
     this.canvas.classList.add("row-label");
     this.rowWrapper.appendChild(this.canvas);
 
@@ -63,7 +69,11 @@ export class RowLabelCanvas {
     window.addEventListener("mouseup", this.handleMouseUp.bind(this));
 
     this.initCanvas(ctx);
-    this.drawRows(ctx, rowId);
+    this.drawRows(ctx, 0);
+  }
+
+  intializeRender( inputManager: InputManager) {
+    this.inputManager = inputManager;
   }
 
   /**
@@ -99,8 +109,8 @@ export class RowLabelCanvas {
     for (let row = startRow; row < totalVisibleRows + startRow; row++) {
       const rowInfo = rowData.get(row);
       const nxtHeight = rowInfo ? rowInfo.height : cellHeight;
-
-      const selectedCells = selectionManager.getCellSelection;
+      if(this.selectionManager === null) return;
+      const selectedCells = this.selectionManager.getCellSelection;
       let startRowIndex = selectedCells.startRow;
       let endRowIndex = selectedCells.endRow;
       let selectionState = selectedCells.selectionState;
@@ -108,9 +118,10 @@ export class RowLabelCanvas {
       if ((startRowIndex > endRowIndex)) {
         [startRowIndex, endRowIndex] = [endRowIndex, startRowIndex]
       }
-      let startMin = Math.min(selectionManager.RowSelection.startRow, selectionManager.RowSelection.endRow);
-      let startMax = Math.max(selectionManager.RowSelection.startRow, selectionManager.RowSelection.endRow);
-      let rowSelectionState = selectionManager.RowSelection.selectionState;
+      if(this.selectionManager === null) return;
+      let startMin = Math.min(this.selectionManager.RowSelection.startRow, this.selectionManager.RowSelection.endRow);
+      let startMax = Math.max(this.selectionManager.RowSelection.startRow, this.selectionManager.RowSelection.endRow);
+      let rowSelectionState = this.selectionManager.RowSelection.selectionState;
 
       // === Row Number Label Highlight ===
       if (((rowSelectionState && startMin <= row && startMax >= row))) {
@@ -216,15 +227,16 @@ export class RowLabelCanvas {
 
       if (offsetY >= y + 4 && offsetY <= y + height) {
         this.inputDiv.style.left = `${CanvasLeftOffset}px`;
-        selectionManager.RowSelection = { ...selectionManager.RowSelection, startRow: selectionManager.getCellSelection.currRow };
-        selectionManager.RowSelection = { ...selectionManager.RowSelection, endRow: selectionManager.getCellSelection.currRow };
+        if(this.selectionManager === null) return;
+        this.selectionManager.RowSelection = { ...this.selectionManager.RowSelection, startRow: this.selectionManager.getCellSelection.currRow };
+        this.selectionManager.RowSelection = { ...this.selectionManager.RowSelection, endRow: this.selectionManager.getCellSelection.currRow };
         this.isSelectingRow = true;
-        selectionManager.ColSelection = {...selectionManager.ColSelection ,selectionState:false};
-        selectionManager.RowSelection = { ...selectionManager.RowSelection, selectionState: true };
-        selectionManager.set(selectionManager.RowSelection.startRow, 0, selectionManager.RowSelection.startRow, 0, true);
-        inputManager.setInputLocation(selectionManager.RowSelection.startRow, 0)
+        this.selectionManager.ColSelection = { ...this.selectionManager.ColSelection, selectionState: false };
+        this.selectionManager.RowSelection = { ...this.selectionManager.RowSelection, selectionState: true };
+        this.selectionManager.set(this.selectionManager.RowSelection.startRow, 0, this.selectionManager.RowSelection.startRow, 0, true);
+        if(this.inputManager === null) return;
+        this.inputManager.setInputLocation(this.selectionManager.RowSelection.startRow, 0)
         this.inputDiv.style.caretColor = "transparent";
-        excelRenderer.render();
         return;
       }
 
@@ -242,8 +254,8 @@ export class RowLabelCanvas {
     let y = 0;
 
     this.skipClick = false;
-
-    selectionManager.set(-100, -100, -100, -100, false);
+    if(this.selectionManager === null) return;
+    this.selectionManager.set(-100, -100, -100, -100, false);
 
     for (let i = 0; i < totalVisibleRows; i++) {
       const row = this.startRow + i;
@@ -259,13 +271,14 @@ export class RowLabelCanvas {
       }
       if (Math.abs(offsetY - (y + height)) <= 4 && offsetX < 20) {
         this.skipClick = true;
-        selectionManager.RowSelection = { startRow: row + 1, endRow: row + 1, selectionState: true }
-        selectionManager.set(row+1,0,row+1,0, true);
+        if(this.selectionManager === null) return;
+        this.selectionManager.RowSelection = { startRow: row + 1, endRow: row + 1, selectionState: true }
+        this.selectionManager.set(row + 1, 0, row + 1, 0, true);
         cellData.insertRowAt(row + 2);
         rowData.insertRowAt(row + 1);
-        inputManager.setInputLocation(selectionManager.RowSelection.startRow, 0)
+        if(this.inputManager === null) return;
+        this.inputManager.setInputLocation(this.selectionManager.RowSelection.startRow, 0)
         this.inputDiv.value = "";
-        excelRenderer.render();
         break;
       }
 
@@ -304,8 +317,8 @@ export class RowLabelCanvas {
     }
 
     if (this.isSelectingRow) {
-      selectionManager.RowSelection = { ...selectionManager.RowSelection, endRow: selectionManager.getCellSelection.currRow };;
-      excelRenderer.render();
+      if(this.selectionManager === null) return;
+      this.selectionManager.RowSelection = { ...this.selectionManager.RowSelection, endRow: this.selectionManager.getCellSelection.currRow };
     }
 
     if (!found && !this.isResizing && !isRowAdd) {
@@ -323,7 +336,6 @@ export class RowLabelCanvas {
       rowData.set(this.targetRow, newHeight);
       this.resizeStartY = offsetY;
 
-      excelRenderer.render();
     }
   }
 
@@ -341,6 +353,3 @@ export class RowLabelCanvas {
     this.targetRow = -1;
   }
 }
-
-/** Singleton export for global use */
-export const rowObj = new RowLabelCanvas(0);

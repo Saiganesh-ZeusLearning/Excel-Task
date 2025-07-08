@@ -13,21 +13,6 @@ export class RowData {
     };
   } = {};
 
-  /**
-   * Tracks the row of the selected cell.
-   * @private
-   * @static
-   * @type {number | null}
-   */
-  private static selectedCellRow: number | null = null;
-
-  /**
-   * Tracks the currently selected row (for full row highlight).
-   * @private
-   * @static
-   * @type {number | null}
-   */
-  private static selectedRow: number | null = null;
 
   /**
    * Sets the height of a specific row.

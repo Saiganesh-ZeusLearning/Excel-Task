@@ -1,16 +1,17 @@
 import { cellData } from "../DataStructures/CellData.js";
-import { selectionManager } from "./SelectionManager.js";
+import { SelectionManager } from "./SelectionManager.js";
 
 export class Calculations {
-    optionSelector: HTMLSelectElement;
-    calculateBtn: HTMLElement;
-    output: HTMLInputElement;
+    private optionSelector: HTMLSelectElement;
+    private calculateBtn: HTMLElement;
+    private output: HTMLInputElement;
+    private selectionManager: SelectionManager;
 
-    constructor() {
+    constructor(selectionManager: SelectionManager) {
         this.optionSelector = document.querySelector("#formulas") as HTMLSelectElement;
         this.calculateBtn = document.querySelector(".calculateBtn") as HTMLElement;
         this.output = document.querySelector(".output") as HTMLInputElement;
-
+        this.selectionManager = selectionManager;
         this.calculateBtn.addEventListener("click", () => {
 
             switch (this.optionSelector.value) {
@@ -47,9 +48,9 @@ export class Calculations {
         }else if(selector === "min"){
             res = Infinity
         }
-        if (selectionManager.RowSelection.selectionState) {
-            let rowStart = selectionManager.RowSelection.startRow + 1;
-            let rowEnd = selectionManager.RowSelection.endRow + 1;
+        if (this.selectionManager.RowSelection.selectionState) {
+            let rowStart = this.selectionManager.RowSelection.startRow + 1;
+            let rowEnd = this.selectionManager.RowSelection.endRow + 1;
             for (let [coordinates, data] of cellData.entries()) {
                 let row = Number(coordinates.split("_")[0]);
                 if (row >= rowStart && row <= rowEnd) {
@@ -69,9 +70,9 @@ export class Calculations {
                     }
                 }
             }
-        } else if (selectionManager.ColSelection.selectionState) {
-            let colStart = selectionManager.ColSelection.startCol + 1;
-            let colEnd = selectionManager.ColSelection.endCol + 1;
+        } else if (this.selectionManager.ColSelection.selectionState) {
+            let colStart = this.selectionManager.ColSelection.startCol + 1;
+            let colEnd = this.selectionManager.ColSelection.endCol + 1;
             for (let [coordinates, data] of cellData.entries()) {
                 let col = Number(coordinates.split("_")[1]);
                 if (col >= colStart && col <= colEnd) {
@@ -91,14 +92,14 @@ export class Calculations {
                     }
                 }
             }
-        } else if (selectionManager.getCellSelection.selectionState) {
+        } else if (this.selectionManager.getCellSelection.selectionState) {
 
             const {
                 startRow,
                 endRow,
                 startCol,
                 endCol,
-            } = selectionManager.getCellSelection;
+            } = this.selectionManager.getCellSelection;
 
             const [minStartRow, maxEndRow] = this.getSortedRange(startRow, endRow);
             const [minStartCol, maxEndCol] = this.getSortedRange(startCol, endCol);

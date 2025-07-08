@@ -1,15 +1,13 @@
-import { excelRenderer } from "../Core/ExcelRenderer.js";
+import { ExcelRenderer } from "../Core/ExcelRenderer.js";
 import { cellData } from "../DataStructures/CellData.js";
-import { User } from "./GenerateData.js";
 
 export class LoadDataManager {
-    private navInput: HTMLInputElement;
     private fileInput: HTMLInputElement;
+    private excelRenderer: ExcelRenderer;
 
-    constructor() {
-        this.navInput = document.querySelector('.nav-row-col')!;
+    constructor(excelRenderer: ExcelRenderer) {
+        this.excelRenderer = excelRenderer;
         this.fileInput = document.querySelector('.inputfile')!;
-
         this.initEvents();
     }
 
@@ -30,7 +28,7 @@ export class LoadDataManager {
                 j++;
             }
         }
-        excelRenderer.render();
+        this.excelRenderer.render();
     }
 
     private handleFileInput(event: Event): void {

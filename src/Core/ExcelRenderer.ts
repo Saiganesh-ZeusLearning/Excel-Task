@@ -1,18 +1,18 @@
 import { colData } from "../DataStructures/ColData.js";
 import { rowData } from "../DataStructures/RowData.js";
-import { colObj } from "../Elements/ColumnLabelCanvas.js";
-import { rowObj } from "../Elements/RowLabelCanvas.js";
+import { ColumnLabelCanvas } from "../Elements/ColumnLabelCanvas.js";
+import { RowLabelCanvas } from "../Elements/RowLabelCanvas.js";
 import { CanvasLeftOffset, CanvasTopOffset, cellHeight, cellWidth } from "../Utils/GlobalVariables.js";
-import { gridObj } from "./GridCanvas.js";
+import { GridCanvas } from "./GridCanvas.js";
 
 /**
  * Renders the Excel grid based on scroll position.
  */
 export class ExcelRenderer {
   /** @type {number} The row index from where rendering starts */
-  public startRow: number = 0;
+  private startRow: number = 0;
   /** @type {number} The column index from where rendering starts */
-  public startCol: number = 0;
+  private startCol: number = 0;
 
   /** @type {HTMLElement} Scrollable container element */
   private scrollContainer: HTMLElement;
@@ -23,18 +23,25 @@ export class ExcelRenderer {
   /** @type {CanvasRenderingContext2D} 2D context for grid canvas */
   private gridCtx: CanvasRenderingContext2D;
 
+  private rowObj: RowLabelCanvas;
+  private colObj: ColumnLabelCanvas;
+  private gridObj: GridCanvas;
+
   /**
    * Initializes the ExcelRenderer class and attaches scroll listener.
    */
-  constructor() {
+  constructor(rowObj : RowLabelCanvas, colObj: ColumnLabelCanvas, gridObj : GridCanvas) {
     this.scrollContainer = document.querySelector(".scrollable") as HTMLElement;
 
+    this.rowObj = rowObj;
     const rowCanvas = rowObj.getRowCanvas;
     this.rowCtx = rowCanvas.getContext("2d") as CanvasRenderingContext2D;
 
+    this.colObj = colObj;
     const colCanvas = colObj.getColCanvas;
     this.colCtx = colCanvas.getContext("2d") as CanvasRenderingContext2D;
 
+    this.gridObj = gridObj;
     const gridCanvas = gridObj.getGridCanvas;
     this.gridCtx = gridCanvas.getContext("2d") as CanvasRenderingContext2D;
 
@@ -110,10 +117,8 @@ export class ExcelRenderer {
 
     
     // Draw visible parts
-    rowObj.drawRows(this.rowCtx, this.startRow);
-    colObj.drawColumns(this.colCtx, this.startCol);
-    gridObj.drawGrid(this.gridCtx, this.startRow, this.startCol);
+    this.rowObj.drawRows(this.rowCtx, this.startRow);
+    this.colObj.drawColumns(this.colCtx, this.startCol);
+    this.gridObj.drawGrid(this.gridCtx, this.startRow, this.startCol);
   }
 }
-
-export const excelRenderer = new ExcelRenderer();

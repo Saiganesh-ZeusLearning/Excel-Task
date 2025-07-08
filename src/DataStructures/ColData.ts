@@ -13,21 +13,6 @@ export class ColData {
     };
   } = {};
 
-  /**
-   * Tracks the currently selected column for full column highlight.
-   * @private
-   * @static
-   * @type {number | null}
-   */
-  private static selectedCol: number | null = null;
-
-  /**
-   * Tracks the column of the selected cell.
-   * @private
-   * @static
-   * @type {number | null}
-   */
-  private static selectedCellCol: number | null = null;
 
   /**
    * Sets width for a specific column.

@@ -1,10 +1,10 @@
-import { excelRenderer } from "../Core/ExcelRenderer.js";
+import { ExcelRenderer } from "../Core/ExcelRenderer.js";
 import { cellData } from "../DataStructures/CellData.js";
 import { colData } from "../DataStructures/ColData.js";
 import { rowData } from "../DataStructures/RowData.js";
 import { commandManager } from "../main.js";
 import { cellHeight, cellWidth, ColLabel, ExcelLeftOffset, ExcelTopOffset, LabelToCol } from "../Utils/GlobalVariables.js";
-import { selectionManager } from "./SelectionManager.js";
+import { SelectionManager } from "./SelectionManager.js";
 
 /**
  * Manages input editing within the grid cells.
@@ -15,6 +15,8 @@ export class InputManager {
   private navRowCol: HTMLInputElement;
   private scrollDiv: HTMLElement;
   private mainCanvas: HTMLElement;
+  private excelRenderer: ExcelRenderer;
+  private selectionManager: SelectionManager;
 
   private prevTop: number = 0;
   private prevLeft: number = 0;
@@ -27,11 +29,13 @@ export class InputManager {
   private shiftRow;
   private shiftCol;
 
-  constructor() {
+  constructor(excelRenderer: ExcelRenderer, selectionManager: SelectionManager) {
     this.scrollDiv = document.querySelector(".scrollable") as HTMLElement;
     this.mainCanvas = document.querySelector(".main-canvas") as HTMLElement;
     this.inputDiv = document.querySelector(".input-selection") as HTMLInputElement;
     this.navRowCol = document.querySelector(".nav-row-col") as HTMLInputElement;
+    this.excelRenderer = excelRenderer;
+    this.selectionManager = selectionManager;
     this.width = window.innerWidth;
     this.height = window.innerHeight;
     this.shiftRow = 0;
@@ -56,7 +60,7 @@ export class InputManager {
         if (parts?.length < 2) return;
         const colNumber = LabelToCol(parts[0]);
         const rowNumber = Number(parts[1]);
-        selectionManager.set(rowNumber,colNumber,rowNumber,colNumber, true);
+        this.selectionManager.set(rowNumber,colNumber,rowNumber,colNumber, true);
       }
     })
   }
@@ -98,8 +102,8 @@ export class InputManager {
     const clientX = e.clientX + scrollLeft - ExcelLeftOffset;
     const clientY = e.clientY + scrollTop - ExcelTopOffset;
 
-    selectionManager.ColSelection = {...selectionManager.ColSelection, selectionState: false};
-    selectionManager.RowSelection ={...selectionManager.RowSelection, selectionState: false};
+    this.selectionManager.ColSelection = {...this.selectionManager.ColSelection, selectionState: false};
+    this.selectionManager.RowSelection ={...this.selectionManager.RowSelection, selectionState: false};
 
     let x = 0, col = 0;
     let colWidth: number = 0;
@@ -118,7 +122,7 @@ export class InputManager {
       row++;
     }
 
-    selectionManager.set(row, col, row, col, true);
+    this.selectionManager.set(row, col, row, col, true);
 
     const cellTop = y + ExcelTopOffset;
     const cellLeft = x + ExcelLeftOffset;
@@ -140,7 +144,7 @@ export class InputManager {
     this.shiftRow = 0;
     this.shiftCol = 0;
     this.inputDiv.focus();
-    excelRenderer.render();
+    this.excelRenderer.render();
   }
 
   private handleKeyDown(e: KeyboardEvent) {
@@ -150,9 +154,9 @@ export class InputManager {
       else if (e.key === 'ArrowUp') this.shiftRow--;
       else if (e.key === 'ArrowRight') this.shiftCol++;
       else if (e.key === 'ArrowLeft') this.shiftCol--;
-      selectionManager.set(this.prevRow, this.prevCol, this.prevRow + this.shiftRow, this.prevCol + this.shiftCol, true);
+      this.selectionManager.set(this.prevRow, this.prevCol, this.prevRow + this.shiftRow, this.prevCol + this.shiftCol, true);
       this.saveCurrentCellValue();
-      excelRenderer.render();
+      this.excelRenderer.render();
       return;
     }
 
@@ -192,12 +196,12 @@ export class InputManager {
     this.resetShift();
     this.inputDiv.style.caretColor = "transparent";
 
-    selectionManager.RowSelection = {...selectionManager.RowSelection, selectionState: false};
-    selectionManager.ColSelection = {...selectionManager.ColSelection, selectionState: false};
-    selectionManager.set(this.prevRow, this.prevCol, this.prevRow, this.prevCol, true);
+    this.selectionManager.RowSelection = {...this.selectionManager.RowSelection, selectionState: false};
+    this.selectionManager.ColSelection = {...this.selectionManager.ColSelection, selectionState: false};
+    this.selectionManager.set(this.prevRow, this.prevCol, this.prevRow, this.prevCol, true);
     this.updateScrollIfNeeded();
     this.updateInputBoxPosition();
-    excelRenderer.render();
+    this.excelRenderer.render();
   }
 
   private saveCurrentCellValue() {

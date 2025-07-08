@@ -1,4 +1,4 @@
-import { excelRenderer } from "../Core/ExcelRenderer.js";
+import { ExcelRenderer } from "../Core/ExcelRenderer.js";
 import { cellData } from "../DataStructures/CellData.js";
 import { colData } from "../DataStructures/ColData.js";
 import { rowData } from "../DataStructures/RowData.js";
@@ -10,12 +10,13 @@ type Command = {
 
 export default class CommandManager {
 
-
     private undoStack: Command[] = [];
     private redoStack: Command[] = [];
+    private excelRenderer: ExcelRenderer;
 
 
-    constructor() {
+    constructor(excelRenderer: ExcelRenderer) {
+        this.excelRenderer = excelRenderer;
         this.attachEventlistners();
     }
 
@@ -82,7 +83,7 @@ export default class CommandManager {
         const command = this.undoStack.pop()!;
         command.undo();
         this.redoStack.push(command);
-        excelRenderer.render();
+        this.excelRenderer.render();
     }
 
     redo(): void {
@@ -90,7 +91,7 @@ export default class CommandManager {
         const command = this.redoStack.pop()!;
         command.redo();
         this.undoStack.push(command);
-        excelRenderer.render();
+        this.excelRenderer.render();
     }
 }
 

@@ -1,4 +1,4 @@
-import { excelRenderer } from "../Core/ExcelRenderer.js";
+import { ExcelRenderer } from "../Core/ExcelRenderer.js";
 import { colData } from "../DataStructures/ColData.js";
 import { rowData } from "../DataStructures/RowData.js";
 import { cellHeight, cellWidth, ExcelLeftOffset, ExcelTopOffset } from "../Utils/GlobalVariables.js";
@@ -10,11 +10,10 @@ import { cellHeight, cellWidth, ExcelLeftOffset, ExcelTopOffset } from "../Utils
 export class SelectionManager {
 
     /** Scroll container element */
-    public scrollDiv: HTMLElement;
+    private scrollDiv: HTMLElement;
 
     /** Main Canvas container element */
-    public mainCanvas: HTMLElement;
-
+    private mainCanvas: HTMLElement;
 
     /** Starting of selected row index */
     private startRow: number = -100;
@@ -55,7 +54,6 @@ export class SelectionManager {
     constructor() {
         this.scrollDiv = document.querySelector(".scrollable") as HTMLElement;
         this.mainCanvas = document.querySelector(".main-canvas-wrapper") as HTMLElement;
-
         this.attachListeners();
     }
 
@@ -164,13 +162,9 @@ export class SelectionManager {
 
         this.endRow = this.currRow;
         this.endCol = this.currCol;
-        excelRenderer.render();
-
     }
 }
 
 // selectionManager.set(3, 0, 2, 2, true);
 
 // selectionManager.ColSelection = {startCol: 1,endCol: 3, selectionState: false};
-
-export const selectionManager = new SelectionManager();
