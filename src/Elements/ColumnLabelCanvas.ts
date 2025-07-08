@@ -146,20 +146,22 @@ export class ColumnLabelCanvas {
         ctx.fillStyle = "green";
         ctx.font = "12px sans-serif";
 
-        // Draw horizontal line
-        ctx.beginPath();
-        ctx.moveTo(x, 23);
-        ctx.lineTo(x + nxtWidth, 23);
-        ctx.lineWidth = 2;
-        ctx.strokeStyle = "green";
-        ctx.stroke();
         
         // Draw vertical line
         ctx.beginPath();
-        ctx.moveTo(x, -2.5);
-        ctx.lineTo(x, this.canvas.height - 2.5);
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, 22);
         ctx.strokeStyle = "#A0D8B9";
         ctx.lineWidth = 1;
+        ctx.stroke();
+
+        
+        // Draw horizontal line
+        ctx.beginPath();
+        ctx.moveTo(x, 23);
+        ctx.lineTo(x + nxtWidth + 1, 23);
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = "green";
         ctx.stroke();
       } else {
         ctx.fillStyle = "#F5F5F5";

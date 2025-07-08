@@ -30,3 +30,12 @@ export function ColLabel(num: number): string {
    }
    return label;
 }
+
+export function LabelToCol(label: string): number {
+   let num = 0;
+   for (let i = 0; i < label.length; i++) {
+      num *= 26;
+      num += label.charCodeAt(i) - 'A'.charCodeAt(0) + 1;
+   }
+   return num;
+}

@@ -3,7 +3,7 @@ import { cellData } from "../DataStructures/CellData.js";
 import { colData } from "../DataStructures/ColData.js";
 import { rowData } from "../DataStructures/RowData.js";
 import { commandManager } from "../main.js";
-import { cellHeight, cellWidth, ColLabel, ExcelLeftOffset, ExcelTopOffset } from "../Utils/GlobalVariables.js";
+import { cellHeight, cellWidth, ColLabel, ExcelLeftOffset, ExcelTopOffset, LabelToCol } from "../Utils/GlobalVariables.js";
 import { selectionManager } from "./SelectionManager.js";
 
 /**
@@ -47,6 +47,19 @@ export class InputManager {
       this.width = window.innerWidth;
       this.height = window.innerHeight;
     });
+
+    this.navRowCol.addEventListener("keydown", (e) => {
+
+      if (e.key === 'Enter') {
+        const str = this.navRowCol.value;
+        const parts = str.match(/[A-Za-z]+|\d+/g)!;
+        if (parts?.length < 2) return;
+        const colNumber = LabelToCol(parts[0]);
+        const rowNumber = Number(parts[1]);
+        selectionManager.set(rowNumber,colNumber,rowNumber,colNumber, true);
+        console.log(rowNumber, colNumber);
+      }
+    })
   }
 
   public setInputLocation(setRow: number, setCol: number) {

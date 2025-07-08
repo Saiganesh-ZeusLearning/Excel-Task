@@ -111,12 +111,12 @@ export class RowLabelCanvas {
       let startMax = Math.max(selectionManager.RowSelectionStart, selectionManager.RowSelectionEnd);
       let rowSelectionState = selectionManager.RowSelectionStatus;
       // === Row Number Label Highlight ===
-      if (( (rowSelectionState && startMin <= row && startMax >= row))) {
+      if (((rowSelectionState && startMin <= row && startMax >= row))) {
         ctx.fillStyle = "#107C41";
-        ctx.fillRect(0, y, 100, nxtHeight);
+        ctx.fillRect(0, y, 50, nxtHeight);
         ctx.fillStyle = "white";
         ctx.font = "bold 14px, Arial";
-        
+
         // Vertical separator line
         ctx.beginPath();
         ctx.moveTo(this.canvas.width, y - 1);
@@ -124,7 +124,7 @@ export class RowLabelCanvas {
         ctx.lineWidth = 1;
         ctx.strokeStyle = "green";
         ctx.stroke();
-        
+
         // Horizontal separator line
         ctx.beginPath();
         ctx.moveTo(-2, y);
@@ -132,51 +132,58 @@ export class RowLabelCanvas {
         ctx.strokeStyle = "#A0D8B9";
         ctx.lineTo(this.canvas.width - 2, y);
         ctx.stroke();
-        
+
       } else if ((selectionState && startRowIndex <= row && endRowIndex >= row)) {
-        ctx.fillStyle = "#A0D8B9";
-        ctx.fillRect(0, y, 100, nxtHeight);
+        ctx.fillStyle = "#CAEAD8";
+        ctx.fillRect(0, y, 50, nxtHeight);
         ctx.font = "12px sans-serif";
         ctx.fillStyle = "#0F703B";
-        
-        // Vertical separator line
-        ctx.beginPath();
-        ctx.moveTo(49, y);
-        ctx.lineTo(49, y + nxtHeight);
-        ctx.lineWidth = 2;
-        ctx.strokeStyle = "#107C41";
-        ctx.stroke();
-        
+
         // Horizontal separator line
         ctx.beginPath();
-        ctx.moveTo(0.5, y + 0.5);
-        ctx.lineTo(48.5, y + 0.5);
+        ctx.moveTo(0, y);
+        ctx.lineTo(48, y);
         ctx.lineWidth = 1;
         ctx.strokeStyle = "#A0D8B9";
         ctx.stroke();
+
+        // Vertical separator line
+        ctx.beginPath();
+        ctx.moveTo(49.5, y);
+        ctx.lineTo(49.5, y + nxtHeight + 1);
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = "green";
+        ctx.stroke();
+
+
       } else {
         ctx.fillStyle = "#F5F5F5";
         ctx.fillRect(0, y, 100, nxtHeight);
-        
+
         ctx.fillStyle = "#000";
         ctx.font = "12px sans-serif";
-        
+
+
+        // Horizontal separator line
+        ctx.beginPath();
+        if (endRowIndex == row - 1) {
+          ctx.strokeStyle = "#A0D8B9";
+          ctx.moveTo(0, y);
+          ctx.lineTo(48, y);
+        } else {
+          ctx.moveTo(0, y);
+          ctx.lineTo(this.canvas.width, y);
+        }
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+
         // Vertical separator line
         ctx.beginPath();
         ctx.moveTo(49.5, y - 1);
         ctx.lineTo(49.5, y + nxtHeight + 1);
         ctx.lineWidth = 1;
         ctx.strokeStyle = "#ddd";
-        ctx.stroke();
-        
-        // Horizontal separator line
-        if (endRowIndex == row - 1) {
-          ctx.strokeStyle = "#A0D8B9";
-        }
-        ctx.beginPath();
-        ctx.moveTo(0, y);
-        ctx.lineWidth = 1;
-        ctx.lineTo(this.canvas.width, y);
         ctx.stroke();
       }
 
@@ -209,7 +216,7 @@ export class RowLabelCanvas {
         inputManager.inputDiv.style.left = `${CanvasLeftOffset}px`;
         selectionManager.RowSelectionStart = selectionManager.getCellSelection.currRow;
         selectionManager.RowSelectionEnd = selectionManager.getCellSelection.currRow;
-        this.isSelectingRow = true;            
+        this.isSelectingRow = true;
         selectionManager.ColSelectionStatus = false;
         selectionManager.RowSelectionStatus = true;
         selectionManager.set(selectionManager.RowSelectionStart, 0, selectionManager.RowSelectionStart, 0, true);
@@ -319,7 +326,7 @@ export class RowLabelCanvas {
   private handleMouseUp() {
     this.isResizing = false;
     this.isSelectingRow = false;
-    if(this.oldValue !== this.newValue){
+    if (this.oldValue !== this.newValue) {
       commandManager.pushRowResizeCommand(this.newValue, this.oldValue, this.targetRow);
       this.oldValue = 0;
       this.newValue = 0;
