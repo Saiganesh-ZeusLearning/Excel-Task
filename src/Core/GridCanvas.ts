@@ -1,6 +1,6 @@
 import { cellData } from "../DataStructures/CellData.js";
-import { ColData, colData } from "../DataStructures/ColData.js";
-import { RowData, rowData } from "../DataStructures/RowData.js";
+import { colData } from "../DataStructures/ColData.js";
+import { rowData } from "../DataStructures/RowData.js";
 import { selectionManager } from "../Interaction/SelectionManager.js";
 import { cellHeight, cellWidth, totalVisibleCols, totalVisibleRows } from "../Utils/GlobalVariables.js";
 
@@ -70,14 +70,14 @@ export class GridCanvas {
       const colWidth = colData.get(col)?.width ?? cellWidth;
       let lineHeight = 0;
 
-      let startMin = Math.min(selectionManager.ColSelectionStart, selectionManager.ColSelectionEnd);
-      let startMax = Math.max(selectionManager.ColSelectionStart, selectionManager.ColSelectionEnd);
+      let startMin = Math.min(selectionManager.ColSelection.startCol, selectionManager.ColSelection.endCol);
+      let startMax = Math.max(selectionManager.ColSelection.startCol, selectionManager.ColSelection.endCol);
 
-      if ((startMin == col && selectionManager.ColSelectionStatus)) {
+      if ((startMin == col && selectionManager.ColSelection.selectionState)) {
         lineHeight = 1.3;
         ctx.strokeStyle = "green";
         ctx.lineWidth = 2;
-      } else if ((startMax == col - 1 && selectionManager.ColSelectionStatus)) {
+      } else if ((startMax == col - 1 && selectionManager.ColSelection.selectionState)) {
         lineHeight = -1.3;
         ctx.strokeStyle = "green";
         ctx.lineWidth = 2;
@@ -106,14 +106,14 @@ export class GridCanvas {
       const rowHeight = rowData.get(row)?.height ?? cellHeight;
       let lineHeight = 0;
 
-      let startMin = Math.min(selectionManager.RowSelectionStart, selectionManager.RowSelectionEnd);
-      let startMax = Math.max(selectionManager.RowSelectionStart, selectionManager.RowSelectionEnd);
+      let startMin = Math.min(selectionManager.RowSelection.startRow, selectionManager.RowSelection.endRow);
+      let startMax = Math.max(selectionManager.RowSelection.startRow, selectionManager.RowSelection.endRow);
 
-      if ((startMin == row && selectionManager.RowSelectionStatus)) {
+      if ((startMin == row && selectionManager.RowSelection.selectionState)) {
         lineHeight = 1.5;
         ctx.strokeStyle = "green";
         ctx.lineWidth = 2;
-      } else if ( (startMax == row - 1 && selectionManager.RowSelectionStatus)) {
+      } else if ((startMax == row - 1 && selectionManager.RowSelection.selectionState)) {
         lineHeight = -1.5;
         ctx.strokeStyle = "green";
         ctx.lineWidth = 2;
@@ -175,10 +175,10 @@ export class GridCanvas {
         if (startColIndex > endColIndex) {
           [startColIndex, endColIndex] = [endColIndex, startColIndex];
         }
-        let startRowMin = Math.min(selectionManager.RowSelectionStart, selectionManager.RowSelectionEnd);
-        let startRowMax = Math.max(selectionManager.RowSelectionStart, selectionManager.RowSelectionEnd);
-        let startColMin = Math.min(selectionManager.ColSelectionStart, selectionManager.ColSelectionEnd);
-        let startColMax = Math.max(selectionManager.ColSelectionStart, selectionManager.ColSelectionEnd);
+        let startRowMin = Math.min(selectionManager.RowSelection.startRow, selectionManager.RowSelection.endRow);
+        let startRowMax = Math.max(selectionManager.RowSelection.startRow, selectionManager.RowSelection.endRow);
+        let startColMin = Math.min(selectionManager.ColSelection.startCol, selectionManager.ColSelection.endCol);
+        let startColMax = Math.max(selectionManager.ColSelection.startCol, selectionManager.ColSelection.endCol);
         if (
           (startRowIndex <= rowIndex)
           && (endRowIndex >= rowIndex)
@@ -190,10 +190,10 @@ export class GridCanvas {
           && selectedCells.selectionState
           || (startRowMin <= rowIndex)
           && (startRowMax >= rowIndex)
-          && selectionManager.RowSelectionStatus
+          && selectionManager.RowSelection.selectionState
           || (startColMin <= colIndex)
           && (startColMax >= colIndex)
-          && selectionManager.ColSelectionStatus
+          && selectionManager.ColSelection.selectionState
         ) {
           ctx.fillStyle = "#E8F2EC";
           ctx.fillRect(xPos, yPos, colWidth, rowHeight);
@@ -251,10 +251,12 @@ export class GridCanvas {
           && (selectedCells.endRow >= rowIndex)
           && selectedCells.selectionState
           && (selectedCells.startCol === colIndex)
+          && !(selectionManager.RowSelection.selectionState)
+          && !(selectionManager.ColSelection.selectionState)
         ) {
           // Start Vertical Line
           ctx.beginPath();
-          ctx.moveTo(xPos + 1, yPos );
+          ctx.moveTo(xPos + 1, yPos);
           ctx.lineTo(xPos + 1, yPos + rowHeight);
           ctx.lineWidth = 2;
           ctx.strokeStyle = "#137E43";
@@ -265,12 +267,14 @@ export class GridCanvas {
           && (selectedCells.endRow >= rowIndex)
           && selectedCells.selectionState
           && (selectedCells.endCol === colIndex)
+          && !(selectionManager.RowSelection.selectionState)
+          && !(selectionManager.ColSelection.selectionState)
         ) {
 
           // End Vertical Line
           ctx.beginPath();
           ctx.moveTo(xPos + colWidth - 1, yPos);
-          ctx.lineTo(xPos + colWidth - 1, yPos + rowHeight );
+          ctx.lineTo(xPos + colWidth - 1, yPos + rowHeight);
           ctx.lineWidth = 2;
           ctx.strokeStyle = "#137E43";
           ctx.stroke();
@@ -279,6 +283,8 @@ export class GridCanvas {
           && (selectedCells.endCol >= colIndex)
           && selectedCells.selectionState
           && (selectedCells.endRow === rowIndex)
+          && !(selectionManager.RowSelection.selectionState)
+          && !(selectionManager.ColSelection.selectionState)
         ) {
 
           // Start Bottom Horizonal Line
@@ -293,6 +299,8 @@ export class GridCanvas {
           && (selectedCells.endCol >= colIndex)
           && (selectedCells.startRow === rowIndex)
           && selectedCells.selectionState
+          && !(selectionManager.RowSelection.selectionState)
+          && !(selectionManager.ColSelection.selectionState)
         ) {
           // Start Horizontal Line
           ctx.beginPath();
@@ -321,7 +329,7 @@ export class GridCanvas {
     ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
     this.drawCellData(ctx, startRow, startCol);
-    if (selectionManager.RowSelectionStatus) {
+    if (selectionManager.RowSelection.selectionState) {
       this.drawVerticalGridLines(ctx, startCol);
       this.drawHorizontalGridLines(ctx, startRow);
     } else {

@@ -1,3 +1,9 @@
+import { excelRenderer } from "../Core/ExcelRenderer.js";
+import { colData } from "../DataStructures/ColData.js";
+import { rowData } from "../DataStructures/RowData.js";
+import { cellHeight, cellWidth } from "../Utils/GlobalVariables.js";
+import { selectionManager } from "./SelectionManager.js";
+
 export class AutoScroller {
   private scrollableDiv: HTMLElement;
   private isSelecting: boolean = false;
@@ -40,6 +46,35 @@ export class AutoScroller {
       } else if (this.pointerX < rect.left) {
         dx = -this.calculateSpeed(rect.left - this.pointerX);
       }
+
+
+      // // === Calculate Column ===
+      // let x = 0, col = 0;
+      // while (x <= selectionManager.clientX) {
+      //   const colWidth = colData.get(col)?.width ?? cellWidth;
+      //   if (x + colWidth > selectionManager.clientX) break;
+      //   x += colWidth;
+      //   col++;
+      // }
+
+      // // === Calculate Row ===
+      // let y = 50, row = 0;
+      // while (y <= selectionManager.clientY) {
+      //   const rowHeight = rowData.get(row)?.height ?? cellHeight;
+      //   if (y + rowHeight > selectionManager.clientY) break;
+      //   y += rowHeight;
+      //   row++;
+      // }
+
+      // selectionManager.getCellSelection.currRow = row;
+      // selectionManager.getCellSelection.currCol = col;
+      // console.log(row, col)
+      // if (!selectionManager.selectingMultipleCells) return;
+      // console.log(selectionManager.selectingMultipleCells)
+
+      // selectionManager.getCellSelection.endRow = selectionManager.getCellSelection.currRow;
+      // selectionManager.getCellSelection.endCol = selectionManager.getCellSelection.currCol;
+      // excelRenderer.render();
 
       this.scrollableDiv.scrollBy(dx, dy);
       this.scrollId = requestAnimationFrame(autoScroll);

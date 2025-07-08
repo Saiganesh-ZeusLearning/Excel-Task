@@ -11,10 +11,10 @@ import { selectionManager } from "./SelectionManager.js";
  * Handles click-based selection and keyboard navigation.
  */
 export class InputManager {
-  public inputDiv: HTMLInputElement;
-  public navRowCol: HTMLInputElement;
-  public scrollDiv: HTMLElement;
-  public mainCanvas: HTMLElement;
+  private inputDiv: HTMLInputElement;
+  private navRowCol: HTMLInputElement;
+  private scrollDiv: HTMLElement;
+  private mainCanvas: HTMLElement;
 
   private prevTop: number = 0;
   private prevLeft: number = 0;
@@ -22,10 +22,10 @@ export class InputManager {
   private prevCol: number = 0;
 
 
-  public width;
-  public height;
-  public shiftRow;
-  public shiftCol;
+  private width;
+  private height;
+  private shiftRow;
+  private shiftCol;
 
   constructor() {
     this.scrollDiv = document.querySelector(".scrollable") as HTMLElement;
@@ -57,7 +57,6 @@ export class InputManager {
         const colNumber = LabelToCol(parts[0]);
         const rowNumber = Number(parts[1]);
         selectionManager.set(rowNumber,colNumber,rowNumber,colNumber, true);
-        console.log(rowNumber, colNumber);
       }
     })
   }
@@ -99,8 +98,8 @@ export class InputManager {
     const clientX = e.clientX + scrollLeft - ExcelLeftOffset;
     const clientY = e.clientY + scrollTop - ExcelTopOffset;
 
-    selectionManager.ColSelectionStatus = false;
-    selectionManager.RowSelectionStatus = false;
+    selectionManager.ColSelection = {...selectionManager.ColSelection, selectionState: false};
+    selectionManager.RowSelection ={...selectionManager.RowSelection, selectionState: false};
 
     let x = 0, col = 0;
     let colWidth: number = 0;
@@ -193,8 +192,9 @@ export class InputManager {
     this.resetShift();
     this.inputDiv.style.caretColor = "transparent";
 
+    selectionManager.RowSelection = {...selectionManager.RowSelection, selectionState: false};
+    selectionManager.ColSelection = {...selectionManager.ColSelection, selectionState: false};
     selectionManager.set(this.prevRow, this.prevCol, this.prevRow, this.prevCol, true);
-
     this.updateScrollIfNeeded();
     this.updateInputBoxPosition();
     excelRenderer.render();

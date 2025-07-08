@@ -1,7 +1,6 @@
 import { excelRenderer } from "../Core/ExcelRenderer.js";
 import { cellData } from "../DataStructures/CellData.js";
-import { ColData } from "../DataStructures/ColData.js";
-import { RowData, rowData } from "../DataStructures/RowData.js";
+import { rowData } from "../DataStructures/RowData.js";
 import { selectionManager } from "../Interaction/SelectionManager.js";
 import { commandManager, inputManager } from "../main.js";
 import { CanvasLeftOffset, cellHeight, totalVisibleRows } from "../Utils/GlobalVariables.js";
@@ -13,6 +12,7 @@ import { CanvasLeftOffset, cellHeight, totalVisibleRows } from "../Utils/GlobalV
 export class RowLabelCanvas {
   /** Canvas element for row labels */
   private canvas: HTMLCanvasElement;
+  private inputDiv: HTMLInputElement;
 
   /** Container element for the row label canvas */
   private rowWrapper: HTMLElement;
@@ -33,10 +33,10 @@ export class RowLabelCanvas {
   private targetRow = -1;
   private skipClick = false;
 
-  isSelectingRow: boolean;
+  private isSelectingRow: boolean;
 
-  oldValue: number;
-  newValue: number;
+  private oldValue: number;
+  private newValue: number;
 
   /**
    * Initializes the RowLabelCanvas class
@@ -45,6 +45,7 @@ export class RowLabelCanvas {
   constructor(rowId: number) {
     this.rowWrapper = document.querySelector(".row-label-wrapper") as HTMLElement;
     this.canvas = document.createElement("canvas") as HTMLCanvasElement;
+    this.inputDiv = document.querySelector(".input-selection") as HTMLInputElement;
     this.canvas.classList.add("row-label");
     this.rowWrapper.appendChild(this.canvas);
 
@@ -107,9 +108,10 @@ export class RowLabelCanvas {
       if ((startRowIndex > endRowIndex)) {
         [startRowIndex, endRowIndex] = [endRowIndex, startRowIndex]
       }
-      let startMin = Math.min(selectionManager.RowSelectionStart, selectionManager.RowSelectionEnd);
-      let startMax = Math.max(selectionManager.RowSelectionStart, selectionManager.RowSelectionEnd);
-      let rowSelectionState = selectionManager.RowSelectionStatus;
+      let startMin = Math.min(selectionManager.RowSelection.startRow, selectionManager.RowSelection.endRow);
+      let startMax = Math.max(selectionManager.RowSelection.startRow, selectionManager.RowSelection.endRow);
+      let rowSelectionState = selectionManager.RowSelection.selectionState;
+
       // === Row Number Label Highlight ===
       if (((rowSelectionState && startMin <= row && startMax >= row))) {
         ctx.fillStyle = "#107C41";
@@ -213,14 +215,15 @@ export class RowLabelCanvas {
       const height = rowData.get(row)?.height ?? cellHeight;
 
       if (offsetY >= y + 4 && offsetY <= y + height) {
-        inputManager.inputDiv.style.left = `${CanvasLeftOffset}px`;
-        selectionManager.RowSelectionStart = selectionManager.getCellSelection.currRow;
-        selectionManager.RowSelectionEnd = selectionManager.getCellSelection.currRow;
+        this.inputDiv.style.left = `${CanvasLeftOffset}px`;
+        selectionManager.RowSelection = { ...selectionManager.RowSelection, startRow: selectionManager.getCellSelection.currRow };
+        selectionManager.RowSelection = { ...selectionManager.RowSelection, endRow: selectionManager.getCellSelection.currRow };
         this.isSelectingRow = true;
-        selectionManager.ColSelectionStatus = false;
-        selectionManager.RowSelectionStatus = true;
-        selectionManager.set(selectionManager.RowSelectionStart, 0, selectionManager.RowSelectionStart, 0, true);
-        inputManager.setInputLocation(selectionManager.RowSelectionStart, 0)
+        selectionManager.ColSelection = {...selectionManager.ColSelection ,selectionState:false};
+        selectionManager.RowSelection = { ...selectionManager.RowSelection, selectionState: true };
+        selectionManager.set(selectionManager.RowSelection.startRow, 0, selectionManager.RowSelection.startRow, 0, true);
+        inputManager.setInputLocation(selectionManager.RowSelection.startRow, 0)
+        this.inputDiv.style.caretColor = "transparent";
         excelRenderer.render();
         return;
       }
@@ -256,8 +259,12 @@ export class RowLabelCanvas {
       }
       if (Math.abs(offsetY - (y + height)) <= 4 && offsetX < 20) {
         this.skipClick = true;
+        selectionManager.RowSelection = { startRow: row + 1, endRow: row + 1, selectionState: true }
+        selectionManager.set(row+1,0,row+1,0, true);
         cellData.insertRowAt(row + 2);
         rowData.insertRowAt(row + 1);
+        inputManager.setInputLocation(selectionManager.RowSelection.startRow, 0)
+        this.inputDiv.value = "";
         excelRenderer.render();
         break;
       }
@@ -297,7 +304,7 @@ export class RowLabelCanvas {
     }
 
     if (this.isSelectingRow) {
-      selectionManager.RowSelectionEnd = selectionManager.getCellSelection.currRow;
+      selectionManager.RowSelection = { ...selectionManager.RowSelection, endRow: selectionManager.getCellSelection.currRow };;
       excelRenderer.render();
     }
 

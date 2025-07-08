@@ -47,9 +47,9 @@ export class Calculations {
         }else if(selector === "min"){
             res = Infinity
         }
-        if (selectionManager.RowSelectionStatus) {
-            let rowStart = selectionManager.RowSelectionStart + 1;
-            let rowEnd = selectionManager.RowSelectionEnd + 1;
+        if (selectionManager.RowSelection.selectionState) {
+            let rowStart = selectionManager.RowSelection.startRow + 1;
+            let rowEnd = selectionManager.RowSelection.endRow + 1;
             for (let [coordinates, data] of cellData.entries()) {
                 let row = Number(coordinates.split("_")[0]);
                 if (row >= rowStart && row <= rowEnd) {
@@ -69,9 +69,9 @@ export class Calculations {
                     }
                 }
             }
-        } else if (selectionManager.ColSelectionStatus) {
-            let colStart = selectionManager.ColSelectionStart + 1;
-            let colEnd = selectionManager.ColSelectionEnd + 1;
+        } else if (selectionManager.ColSelection.selectionState) {
+            let colStart = selectionManager.ColSelection.startCol + 1;
+            let colEnd = selectionManager.ColSelection.endCol + 1;
             for (let [coordinates, data] of cellData.entries()) {
                 let col = Number(coordinates.split("_")[1]);
                 if (col >= colStart && col <= colEnd) {

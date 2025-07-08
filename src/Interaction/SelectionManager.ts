@@ -1,6 +1,6 @@
 import { excelRenderer } from "../Core/ExcelRenderer.js";
-import { ColData, colData } from "../DataStructures/ColData.js";
-import { RowData, rowData } from "../DataStructures/RowData.js";
+import { colData } from "../DataStructures/ColData.js";
+import { rowData } from "../DataStructures/RowData.js";
 import { cellHeight, cellWidth, ExcelLeftOffset, ExcelTopOffset } from "../Utils/GlobalVariables.js";
 
 /**
@@ -36,26 +36,62 @@ export class SelectionManager {
 
     private selectionState: boolean = false;
 
-    public RowSelectionStart = -100
-    public RowSelectionEnd = -100
-    public RowSelectionStatus = false
+    /** Selection row data  */
+    private RowSelectionStart = -100
+    private RowSelectionEnd = -100
+    private RowSelectionStatus = false
 
-    public ColSelectionStart = -100
-    public ColSelectionEnd = -100
-    public ColSelectionStatus = false
+    /** Selection col data  */
+    private ColSelectionStart = -100
+    private ColSelectionEnd = -100
+    private ColSelectionStatus = false
 
 
+    /** Multiple Cell Selection*/
     private selectingMultipleCells: boolean = false;
 
 
-    /**
-     * Initializes input manager and attaches event listeners.
-     */
+
     constructor() {
         this.scrollDiv = document.querySelector(".scrollable") as HTMLElement;
         this.mainCanvas = document.querySelector(".main-canvas-wrapper") as HTMLElement;
 
         this.attachListeners();
+    }
+
+    set RowSelection(data: { startRow: number, endRow: number, selectionState: boolean }) {
+        this.RowSelectionStart = data.startRow;
+        this.RowSelectionEnd = data.endRow;
+        this.RowSelectionStatus = data.selectionState;
+    }
+
+    get RowSelection() {
+        return {
+            startRow: this.RowSelectionStart,
+            endRow: this.RowSelectionEnd,
+            selectionState: this.RowSelectionStatus,
+        }
+    }
+    set ColSelection(data: { startCol: number, endCol: number, selectionState: boolean }) {
+        this.ColSelectionStart = data.startCol;
+        this.ColSelectionEnd = data.endCol;
+        this.ColSelectionStatus = data.selectionState;
+    }
+
+    get ColSelection() {
+        return {
+            startCol: this.ColSelectionStart,
+            endCol: this.ColSelectionEnd,
+            selectionState: this.ColSelectionStatus,
+        }
+    }
+
+    set(startRow: number, startCol: number, endRow: number, endCol: number, selectionState: boolean) {
+        this.startRow = startRow;
+        this.startCol = startCol;
+        this.endRow = endRow;
+        this.endCol = endCol;
+        this.selectionState = selectionState;
     }
 
     get getCellSelection() {
@@ -64,45 +100,10 @@ export class SelectionManager {
             startCol: this.startCol,
             endRow: this.endRow,
             endCol: this.endCol,
-            currRow: this.currRow, 
-            currCol: this.currCol, 
-            selectionState : this.selectionState
+            currRow: this.currRow,
+            currCol: this.currCol,
+            selectionState: this.selectionState
         }
-    }
-
-    set RowSelection(data: {startRow: number, endRow: number, selectionState: boolean}){
-            this.RowSelectionStart = data.startRow;
-            this.RowSelectionEnd = data.endRow;
-            this.RowSelectionStatus = data.selectionState;
-    }
-
-    get RowSelection(){
-        return {
-            startRow: this.RowSelectionStart,
-            endRow: this.RowSelectionEnd,
-            selectionState: this.RowSelectionStatus,
-        }
-    }
-    set ColSelection(data: {startCol: number, endCol: number, selectionState: boolean}){
-            this.ColSelectionStart = data.startCol;
-            this.ColSelectionEnd = data.endCol;
-            this.ColSelectionStatus = data.selectionState;
-    }
-
-    get ColSelection(){
-        return {
-            startCol: this.ColSelectionStart,
-            endCol: this.ColSelectionEnd,
-            selectionState: this.ColSelectionStatus,
-        }
-    }
-
-    set(startRow: number, startCol: number, endRow: number, endCol: number, selectionState: boolean){
-        this.startRow = startRow;
-        this.startCol = startCol;
-        this.endRow = endRow;
-        this.endCol = endCol;
-        this.selectionState = selectionState;
     }
 
 
@@ -116,15 +117,15 @@ export class SelectionManager {
     }
 
     private handleMouseDown(e: MouseEvent) {
-        if (e.button !== 0) return; 
-        
+        if (e.button !== 0) return;
+
         this.selectingMultipleCells = true;
 
         this.startRow = this.currRow;
         this.startCol = this.currCol;
-        this.set(this.startRow,this.startCol,this.currRow, this.currCol, true);
+        this.set(this.startRow, this.startCol, this.currRow, this.currCol, true);
     }
-    
+
     private handleMouseUp() {
         this.selectingMultipleCells = false;
     }
@@ -146,7 +147,7 @@ export class SelectionManager {
             x += colWidth;
             col++;
         }
-        
+
         // === Calculate Row ===
         let y = 50, row = 0;
         while (y <= clientY) {
@@ -164,6 +165,7 @@ export class SelectionManager {
         this.endRow = this.currRow;
         this.endCol = this.currCol;
         excelRenderer.render();
+
     }
 }
 
