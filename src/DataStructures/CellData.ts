@@ -1,3 +1,5 @@
+import { cellData } from "../main.js";
+
 /**
  * Class to manage and manipulate cell data using a `${row}_${col}` key format.
  */
@@ -86,10 +88,9 @@ export class CellData {
   }
 
 }
-export const cellData = new CellData();
 
-cellData.set(6, 3, "123");
-cellData.set(6, 2, "hello");
-cellData.set(6, 4, "395");
-// cellData.insertRowAt(6)
+// cellData.set(6, 3, "123");
+// cellData.set(6, 2, "hello");
+// cellData.set(6, 4, "395");
+// cellData.insertRowAt(6);
 

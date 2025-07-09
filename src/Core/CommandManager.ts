@@ -1,7 +1,5 @@
-import { ExcelRenderer } from "../Core/ExcelRenderer.js";
-import { cellData } from "../DataStructures/CellData.js";
-import { colData } from "../DataStructures/ColData.js";
-import { rowData } from "../DataStructures/RowData.js";
+import { ExcelRenderer } from "./ExcelRenderer.js";
+import { cellData, colData, rowData } from "../main.js";
 
 type Command = {
     undo: () => void;
@@ -12,35 +10,6 @@ export default class CommandManager {
 
     private undoStack: Command[] = [];
     private redoStack: Command[] = [];
-    private excelRenderer: ExcelRenderer;
-
-
-    constructor(excelRenderer: ExcelRenderer) {
-        this.excelRenderer = excelRenderer;
-        this.attachEventlistners();
-    }
-
-    private attachEventlistners() {
-        window.addEventListener("keydown", this.handleKeyDown.bind(this));
-    }
-
-    private handleKeyDown(e: KeyboardEvent) {
-        // Ctrl+Z or Cmd+Z → Undo
-        if (e.ctrlKey && e.key.toLowerCase() === "z" && !e.shiftKey) {
-            e.preventDefault();
-            this.undo();
-        }
-        // Ctrl+Shift+Z or Cmd+Shift+Z → Redo
-        else if (e.ctrlKey && e.key.toLowerCase() === "z" && e.shiftKey) {
-            e.preventDefault();
-            this.redo();
-        }
-        // Ctrl+Y → Redo (Windows fallback)
-        else if (e.ctrlKey && e.key.toLowerCase() === "y") {
-            e.preventDefault();
-            this.redo();
-        }
-    }
 
     pushCellEditCommand(newValue: any, oldValue: any, row: number, col: number): void {
         const command: Command = {
@@ -83,7 +52,6 @@ export default class CommandManager {
         const command = this.undoStack.pop()!;
         command.undo();
         this.redoStack.push(command);
-        this.excelRenderer.render();
     }
 
     redo(): void {
@@ -91,7 +59,6 @@ export default class CommandManager {
         const command = this.redoStack.pop()!;
         command.redo();
         this.undoStack.push(command);
-        this.excelRenderer.render();
     }
 }
 

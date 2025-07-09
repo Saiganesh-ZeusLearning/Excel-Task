@@ -1,7 +1,6 @@
-import { colData } from "../DataStructures/ColData.js";
-import { rowData } from "../DataStructures/RowData.js";
 import { ColumnLabelCanvas } from "../Elements/ColumnLabelCanvas.js";
 import { RowLabelCanvas } from "../Elements/RowLabelCanvas.js";
+import { colData, rowData } from "../main.js";
 import { CanvasLeftOffset, CanvasTopOffset, cellHeight, cellWidth } from "../Utils/GlobalVariables.js";
 import { GridCanvas } from "./GridCanvas.js";
 

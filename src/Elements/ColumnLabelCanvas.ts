@@ -1,9 +1,6 @@
-import { ExcelRenderer } from "../Core/ExcelRenderer.js";
-import { cellData } from "../DataStructures/CellData.js";
-import { colData } from "../DataStructures/ColData.js";
-import { InputManager } from "../Interaction/InputManager.js";
-import { SelectionManager } from "../Interaction/SelectionManager.js";
-import { commandManager} from "../main.js";
+import { InputManager } from "../Core/InputManager.js";
+import { SelectionManager } from "../Core/SelectionManager.js";
+import { cellData, colData, commandManager } from "../main.js";
 import { CanvasTopOffset, cellWidth, ColLabel, totalVisibleCols } from "../Utils/GlobalVariables.js";
 
 /**
@@ -29,8 +26,6 @@ export class ColumnLabelCanvas {
   /** @type {number} Total canvas width based on totalCols and cellWidth */
   private width = totalVisibleCols * cellWidth + 1;
 
-  /** @type {boolean} Whether column resizing is in progress */
-  private isResizing = false;
 
   /** @type {number} X coordinate where resize started */
   private resizeStartX = 0;
@@ -87,6 +82,10 @@ export class ColumnLabelCanvas {
    */
   get getColCanvas() {
     return this.canvas;
+  }
+
+  get getColStart(){
+    return this.startCol;
   }
 
   /**
@@ -233,7 +232,7 @@ export class ColumnLabelCanvas {
         this.selectionManager.RowSelection = { ...this.selectionManager.RowSelection, selectionState: false };
         this.selectionManager.ColSelection = { ...this.selectionManager.ColSelection, startCol: this.selectionManager.getCellSelection.currCol, endCol: this.selectionManager.getCellSelection.currCol, selectionState: true };
         this.selectionManager.set(0, this.selectionManager.ColSelection.startCol, 0, this.selectionManager.ColSelection.startCol, true);
-        if(this.inputManager === null) return;
+        if (this.inputManager === null) return;
         this.inputManager.setInputLocation(0, this.selectionManager.ColSelection.startCol);
         this.inputDiv.style.caretColor = "transparent";
         return;
@@ -253,7 +252,7 @@ export class ColumnLabelCanvas {
 
     this.skipClick = false;
 
-    if(this.selectionManager === null) return;
+    if (this.selectionManager === null) return;
     this.selectionManager.set(-100, -100, -100, -100, false);
 
     for (let i = 0; i < totalVisibleCols; i++) {
@@ -261,7 +260,7 @@ export class ColumnLabelCanvas {
       const width = colData.get(col)?.width ?? cellWidth;
 
       if (Math.abs(offsetX - (x + width)) <= 4 && offsetY > 9) {
-        this.isResizing = true;
+        this.selectionManager.ColSelection = { ...this.selectionManager.ColSelection, isColResizing: true };
         this.resizeStartX = offsetX;
         this.targetCol = col;
         this.oldValue = colData.get(this.targetCol)?.width ?? 100;
@@ -275,9 +274,7 @@ export class ColumnLabelCanvas {
         colData.insertColumnAt(col + 1);
         if (this.selectionManager === null) return;
         this.selectionManager.set(0, col + 1, 0, col + 1, true);
-        this.selectionManager.ColSelection = { endCol: col + 1, startCol: col + 1, selectionState: true }
-        if(this.inputManager === null) return;
-        this.inputManager.setInputLocation(0, col + 1);
+        this.selectionManager.ColSelection = { endCol: col + 1, startCol: col + 1, selectionState: true, isColResizing: false }
         break;
       }
 
@@ -321,18 +318,19 @@ export class ColumnLabelCanvas {
       this.selectionManager.ColSelection = { ...this.selectionManager.ColSelection, endCol: this.selectionManager.getCellSelection.currCol };
     }
 
-    if (!found && !this.isResizing) {
+    if (!found && !this.selectionManager?.ColSelection.isColResizing) {
       this.canvas.style.cursor = "url('../../build/style/cursor-down.png') 12 12, auto";
     }
 
-    if (this.isResizing && this.targetCol !== -1) {
+    if (this.selectionManager?.ColSelection.isColResizing && this.targetCol !== -1) {
       const diff = offsetX - this.resizeStartX;
       const currentWidth = colData.get(this.targetCol)?.width ?? cellWidth;
       const newWidth = Math.max(30, currentWidth + diff);
       this.newValue = newWidth;
       colData.set(this.targetCol, newWidth);
       this.resizeStartX = offsetX;
-
+      if (this.inputManager === null) return;
+      this.inputManager.setInputLocation(0, this.selectionManager.ColSelection.startCol);
     }
   }
 
@@ -340,7 +338,8 @@ export class ColumnLabelCanvas {
    * Handles mouse up event to finalize column resizing.
    */
   private handleMouseUp() {
-    this.isResizing = false;
+    if (this.selectionManager === null) return;
+    this.selectionManager.ColSelection = { ...this.selectionManager.ColSelection, isColResizing: false };
     this.isSelectingCol = false;
     if (this.oldValue !== this.newValue) {
       commandManager.pushColResizeCommand(this.newValue, this.oldValue, this.targetCol);

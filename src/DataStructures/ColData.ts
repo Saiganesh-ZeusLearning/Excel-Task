@@ -77,8 +77,7 @@ export class ColData {
 
 }
 
-/** Singleton instance of the ColData class */
-export const colData = new ColData();
+
 
 // Example usage
 // colData.set(2, 200);

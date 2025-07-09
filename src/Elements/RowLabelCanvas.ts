@@ -1,9 +1,6 @@
-import { ExcelRenderer } from "../Core/ExcelRenderer.js";
-import { cellData } from "../DataStructures/CellData.js";
-import { rowData } from "../DataStructures/RowData.js";
-import { InputManager } from "../Interaction/InputManager.js";
-import { SelectionManager } from "../Interaction/SelectionManager.js";
-import { commandManager } from "../main.js";
+import { InputManager } from "../Core/InputManager.js";
+import { SelectionManager } from "../Core/SelectionManager.js";
+import { cellData, commandManager, rowData } from "../main.js";
 import { CanvasLeftOffset, cellHeight, totalVisibleRows } from "../Utils/GlobalVariables.js";
 
 /**
@@ -32,7 +29,6 @@ export class RowLabelCanvas {
 
 
   /** Resizing state tracking */
-  private isResizing = false;
   private resizeStartY = 0;
   private targetRow = -1;
   private skipClick = false;
@@ -72,7 +68,7 @@ export class RowLabelCanvas {
     this.drawRows(ctx, 0);
   }
 
-  intializeRender( inputManager: InputManager) {
+  intializeRender(inputManager: InputManager) {
     this.inputManager = inputManager;
   }
 
@@ -96,6 +92,10 @@ export class RowLabelCanvas {
     return this.canvas;
   }
 
+  get getStartRow(){
+    return this.startRow;
+  }
+
   /**
    * Draws row lines and row number labels
    * @param ctx - 2D drawing context
@@ -109,7 +109,7 @@ export class RowLabelCanvas {
     for (let row = startRow; row < totalVisibleRows + startRow; row++) {
       const rowInfo = rowData.get(row);
       const nxtHeight = rowInfo ? rowInfo.height : cellHeight;
-      if(this.selectionManager === null) return;
+      if (this.selectionManager === null) return;
       const selectedCells = this.selectionManager.getCellSelection;
       let startRowIndex = selectedCells.startRow;
       let endRowIndex = selectedCells.endRow;
@@ -118,7 +118,7 @@ export class RowLabelCanvas {
       if ((startRowIndex > endRowIndex)) {
         [startRowIndex, endRowIndex] = [endRowIndex, startRowIndex]
       }
-      if(this.selectionManager === null) return;
+      if (this.selectionManager === null) return;
       let startMin = Math.min(this.selectionManager.RowSelection.startRow, this.selectionManager.RowSelection.endRow);
       let startMax = Math.max(this.selectionManager.RowSelection.startRow, this.selectionManager.RowSelection.endRow);
       let rowSelectionState = this.selectionManager.RowSelection.selectionState;
@@ -227,14 +227,14 @@ export class RowLabelCanvas {
 
       if (offsetY >= y + 4 && offsetY <= y + height) {
         this.inputDiv.style.left = `${CanvasLeftOffset}px`;
-        if(this.selectionManager === null) return;
+        if (this.selectionManager === null) return;
         this.selectionManager.RowSelection = { ...this.selectionManager.RowSelection, startRow: this.selectionManager.getCellSelection.currRow };
         this.selectionManager.RowSelection = { ...this.selectionManager.RowSelection, endRow: this.selectionManager.getCellSelection.currRow };
         this.isSelectingRow = true;
         this.selectionManager.ColSelection = { ...this.selectionManager.ColSelection, selectionState: false };
         this.selectionManager.RowSelection = { ...this.selectionManager.RowSelection, selectionState: true };
         this.selectionManager.set(this.selectionManager.RowSelection.startRow, 0, this.selectionManager.RowSelection.startRow, 0, true);
-        if(this.inputManager === null) return;
+        if (this.inputManager === null) return;
         this.inputManager.setInputLocation(this.selectionManager.RowSelection.startRow, 0)
         this.inputDiv.style.caretColor = "transparent";
         return;
@@ -254,7 +254,7 @@ export class RowLabelCanvas {
     let y = 0;
 
     this.skipClick = false;
-    if(this.selectionManager === null) return;
+    if (this.selectionManager === null) return;
     this.selectionManager.set(-100, -100, -100, -100, false);
 
     for (let i = 0; i < totalVisibleRows; i++) {
@@ -262,7 +262,7 @@ export class RowLabelCanvas {
       const height = rowData.get(row)?.height ?? cellHeight;
 
       if (Math.abs(offsetY - (y + height)) <= 4 && offsetX > 20) {
-        this.isResizing = true;
+        this.selectionManager.RowSelection = { ...this.selectionManager.RowSelection, isRowResizing: true };
         this.resizeStartY = offsetY;
         this.targetRow = row;
         this.oldValue = rowData.get(this.targetRow)?.height ?? 24;
@@ -271,13 +271,11 @@ export class RowLabelCanvas {
       }
       if (Math.abs(offsetY - (y + height)) <= 4 && offsetX < 20) {
         this.skipClick = true;
-        if(this.selectionManager === null) return;
-        this.selectionManager.RowSelection = { startRow: row + 1, endRow: row + 1, selectionState: true }
+        if (this.selectionManager === null) return;
+        this.selectionManager.RowSelection = { startRow: row + 1, endRow: row + 1, selectionState: true, isRowResizing: false }
         this.selectionManager.set(row + 1, 0, row + 1, 0, true);
         cellData.insertRowAt(row + 2);
         rowData.insertRowAt(row + 1);
-        if(this.inputManager === null) return;
-        this.inputManager.setInputLocation(this.selectionManager.RowSelection.startRow, 0)
         this.inputDiv.value = "";
         break;
       }
@@ -317,17 +315,17 @@ export class RowLabelCanvas {
     }
 
     if (this.isSelectingRow) {
-      if(this.selectionManager === null) return;
+      if (this.selectionManager === null) return;
       this.selectionManager.RowSelection = { ...this.selectionManager.RowSelection, endRow: this.selectionManager.getCellSelection.currRow };
     }
 
-    if (!found && !this.isResizing && !isRowAdd) {
+    if (!found && !this.selectionManager?.RowSelection.isRowResizing && !isRowAdd) {
       this.canvas.style.cursor = "url('../../build/style/cursor-right.png') 12 12, auto";
     }
 
 
     // === Resize logic ===
-    if (this.isResizing && this.targetRow !== -1) {
+    if (this.selectionManager?.RowSelection.isRowResizing && this.targetRow !== -1) {
       const diff = offsetY - this.resizeStartY;
       const currentHeight = rowData.get(this.targetRow)?.height ?? cellHeight;
       const newHeight = Math.max(20, currentHeight + diff);
@@ -335,7 +333,9 @@ export class RowLabelCanvas {
 
       rowData.set(this.targetRow, newHeight);
       this.resizeStartY = offsetY;
+      if (this.inputManager === null) return;
 
+      this.inputManager.setInputLocation(this.selectionManager.RowSelection.startRow, 0)
     }
   }
 
@@ -343,7 +343,8 @@ export class RowLabelCanvas {
    * Handles mouse up to finish resizing
    */
   private handleMouseUp() {
-    this.isResizing = false;
+    if (this.selectionManager === null) return;
+    this.selectionManager.RowSelection = { ...this.selectionManager.RowSelection, isRowResizing: false };
     this.isSelectingRow = false;
     if (this.oldValue !== this.newValue) {
       commandManager.pushRowResizeCommand(this.newValue, this.oldValue, this.targetRow);

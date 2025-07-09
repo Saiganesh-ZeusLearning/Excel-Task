@@ -1,8 +1,4 @@
-import { ExcelRenderer } from "../Core/ExcelRenderer.js";
-import { cellData } from "../DataStructures/CellData.js";
-import { colData } from "../DataStructures/ColData.js";
-import { rowData } from "../DataStructures/RowData.js";
-import { commandManager } from "../main.js";
+import { cellData, colData, commandManager, rowData } from "../main.js";
 import { cellHeight, cellWidth, ColLabel, ExcelLeftOffset, ExcelTopOffset, LabelToCol } from "../Utils/GlobalVariables.js";
 import { SelectionManager } from "./SelectionManager.js";
 
@@ -15,7 +11,6 @@ export class InputManager {
   private navRowCol: HTMLInputElement;
   private scrollDiv: HTMLElement;
   private mainCanvas: HTMLElement;
-  private excelRenderer: ExcelRenderer;
   private selectionManager: SelectionManager;
 
   private prevTop: number = 0;
@@ -29,12 +24,11 @@ export class InputManager {
   private shiftRow;
   private shiftCol;
 
-  constructor(excelRenderer: ExcelRenderer, selectionManager: SelectionManager) {
+  constructor( selectionManager: SelectionManager) {
     this.scrollDiv = document.querySelector(".scrollable") as HTMLElement;
     this.mainCanvas = document.querySelector(".main-canvas") as HTMLElement;
     this.inputDiv = document.querySelector(".input-selection") as HTMLInputElement;
     this.navRowCol = document.querySelector(".nav-row-col") as HTMLInputElement;
-    this.excelRenderer = excelRenderer;
     this.selectionManager = selectionManager;
     this.width = window.innerWidth;
     this.height = window.innerHeight;
@@ -144,7 +138,6 @@ export class InputManager {
     this.shiftRow = 0;
     this.shiftCol = 0;
     this.inputDiv.focus();
-    this.excelRenderer.render();
   }
 
   private handleKeyDown(e: KeyboardEvent) {
@@ -156,7 +149,6 @@ export class InputManager {
       else if (e.key === 'ArrowLeft') this.shiftCol--;
       this.selectionManager.set(this.prevRow, this.prevCol, this.prevRow + this.shiftRow, this.prevCol + this.shiftCol, true);
       this.saveCurrentCellValue();
-      this.excelRenderer.render();
       return;
     }
 
@@ -201,7 +193,6 @@ export class InputManager {
     this.selectionManager.set(this.prevRow, this.prevCol, this.prevRow, this.prevCol, true);
     this.updateScrollIfNeeded();
     this.updateInputBoxPosition();
-    this.excelRenderer.render();
   }
 
   private saveCurrentCellValue() {

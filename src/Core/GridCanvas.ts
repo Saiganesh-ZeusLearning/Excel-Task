@@ -1,7 +1,5 @@
-import { cellData } from "../DataStructures/CellData.js";
-import { colData } from "../DataStructures/ColData.js";
-import { rowData } from "../DataStructures/RowData.js";
-import { SelectionManager } from "../Interaction/SelectionManager.js";
+import { SelectionManager } from "./SelectionManager.js";
+import { cellData, colData, rowData } from "../main.js";
 import { cellHeight, cellWidth, totalVisibleCols, totalVisibleRows } from "../Utils/GlobalVariables.js";
 import { ExcelRenderer } from "./ExcelRenderer.js";
 

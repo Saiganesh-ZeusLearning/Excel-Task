@@ -78,7 +78,6 @@ export class RowData {
 }
 
 /** Singleton instance of the RowData class */
-export const rowData = new RowData();
 
 // Example usage:
 // RowData.setSelectedCellRow(5);

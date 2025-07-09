@@ -1,5 +1,5 @@
-import { cellData } from "../DataStructures/CellData.js";
-import { SelectionManager } from "./SelectionManager.js";
+import { cellData } from "../main.js";
+import { SelectionManager } from "../Core/SelectionManager.js";
 
 export class Calculations {
     private optionSelector: HTMLSelectElement;

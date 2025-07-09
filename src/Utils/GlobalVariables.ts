@@ -18,6 +18,8 @@ export const totalVisibleCols: number = 20;
 /** @type {number} Total number of rows in the grid */
 export const totalVisibleRows: number = 50;
 
+export let StartRow: number = 0;
+
 export const ExcelLeftOffset = 50;
 export const ExcelTopOffset = 25;
 

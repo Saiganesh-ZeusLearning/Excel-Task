@@ -1,5 +1,5 @@
 import { ExcelRenderer } from "../Core/ExcelRenderer.js";
-import { cellData } from "../DataStructures/CellData.js";
+import { cellData } from "../main.js";
 
 export class LoadDataManager {
     private fileInput: HTMLInputElement;

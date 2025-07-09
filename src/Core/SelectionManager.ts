@@ -1,6 +1,4 @@
-import { ExcelRenderer } from "../Core/ExcelRenderer.js";
-import { colData } from "../DataStructures/ColData.js";
-import { rowData } from "../DataStructures/RowData.js";
+import { colData, rowData } from "../main.js";
 import { cellHeight, cellWidth, ExcelLeftOffset, ExcelTopOffset } from "../Utils/GlobalVariables.js";
 
 /**
@@ -39,11 +37,13 @@ export class SelectionManager {
     private RowSelectionStart = -100
     private RowSelectionEnd = -100
     private RowSelectionStatus = false
-
+    private isRowResizing = false;
+    
     /** Selection col data  */
     private ColSelectionStart = -100
     private ColSelectionEnd = -100
     private ColSelectionStatus = false
+    private isColResizing = false;
 
 
     /** Multiple Cell Selection*/
@@ -57,10 +57,11 @@ export class SelectionManager {
         this.attachListeners();
     }
 
-    set RowSelection(data: { startRow: number, endRow: number, selectionState: boolean }) {
+    set RowSelection(data: { startRow: number, endRow: number, selectionState: boolean , isRowResizing: boolean}) {
         this.RowSelectionStart = data.startRow;
         this.RowSelectionEnd = data.endRow;
         this.RowSelectionStatus = data.selectionState;
+        this.isRowResizing = data.isRowResizing;
     }
 
     get RowSelection() {
@@ -68,12 +69,14 @@ export class SelectionManager {
             startRow: this.RowSelectionStart,
             endRow: this.RowSelectionEnd,
             selectionState: this.RowSelectionStatus,
+            isRowResizing: this.isRowResizing,
         }
     }
-    set ColSelection(data: { startCol: number, endCol: number, selectionState: boolean }) {
+    set ColSelection(data: { startCol: number, endCol: number, selectionState: boolean ,isColResizing: boolean}) {
         this.ColSelectionStart = data.startCol;
         this.ColSelectionEnd = data.endCol;
         this.ColSelectionStatus = data.selectionState;
+        this.isColResizing = data.isColResizing;
     }
 
     get ColSelection() {
@@ -81,6 +84,7 @@ export class SelectionManager {
             startCol: this.ColSelectionStart,
             endCol: this.ColSelectionEnd,
             selectionState: this.ColSelectionStatus,
+            isColResizing: this.isColResizing,
         }
     }
 
