@@ -58,11 +58,11 @@ export class RowLabelCanvas {
     this.isSelectingRow = false;
 
 
-    // === Events ===
-    this.canvas.addEventListener("mousedown", this.handleMouseDownResize.bind(this));
-    this.canvas.addEventListener("mousedown", this.handleMouseDownEventSelection.bind(this));
-    window.addEventListener("mousemove", this.handleMouseMove.bind(this));
-    window.addEventListener("mouseup", this.handleMouseUp.bind(this));
+    // // === Events ===
+    // this.canvas.addEventListener("mousedown", this.handleMouseDownResize.bind(this));
+    // this.canvas.addEventListener("mousedown", this.handleMouseDownEventSelection.bind(this));
+    // window.addEventListener("mousemove", this.handleMouseMove.bind(this));
+    // window.addEventListener("mouseup", this.handleMouseUp.bind(this));
 
     this.initCanvas(ctx);
     this.drawRows(ctx, 0);

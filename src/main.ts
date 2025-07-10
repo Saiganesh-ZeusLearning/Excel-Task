@@ -12,6 +12,8 @@ import { RowData } from "./DataStructures/RowData.js";
 import { ColData } from "./DataStructures/ColData.js";
 import { CellData } from "./DataStructures/CellData.js";
 import { MasterInteraction } from "./Interaction/MasterInteraction.js";
+import { RowSelectionHandler } from "./Interaction/RowSelectionHandler.js";
+import { RowResizingHandler } from "./Interaction/RowResizingHandler.js";
 
 const selectionManager = new SelectionManager();
 export const rowData = new RowData();
@@ -39,8 +41,11 @@ new LoadDataManager(excelRenderer);
 new AutoScroller();
 
 
+const rowSelectionHandler = new RowSelectionHandler(selectionManager, excelRenderer);
 
-const masterInteraction = new MasterInteraction(rowObj, colObj, gridObj);
+const rowResizingHandler =  new RowResizingHandler(selectionManager, excelRenderer);
+
+const masterInteraction = new MasterInteraction(rowObj, colObj, gridObj, rowSelectionHandler, rowResizingHandler);
 
 
 
