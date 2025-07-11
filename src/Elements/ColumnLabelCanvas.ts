@@ -1,6 +1,7 @@
+import CommandManager from "../Core/CommandManager.js";
 import { InputManager } from "../Core/InputManager.js";
 import { SelectionManager } from "../Core/SelectionManager.js";
-import { cellData, colData, commandManager } from "../main.js";
+import { cellData, colData} from "../main.js";
 import { CanvasTopOffset, cellWidth, ColLabel, totalVisibleCols } from "../Utils/GlobalVariables.js";
 
 /**
@@ -13,6 +14,7 @@ export class ColumnLabelCanvas {
   private scrollDiv: HTMLElement;
   private selectionManager: SelectionManager | null;
   private inputManager: InputManager | null;
+  private commandManager: CommandManager;
 
   /** @type {HTMLElement} Wrapper for column label canvas */
   private colWrapper: HTMLElement;
@@ -45,12 +47,13 @@ export class ColumnLabelCanvas {
    * Initializes the ColumnLabelCanvas instance.
    * @param {number} colId - Column index to start drawing from.
    */
-  constructor(selectionManager: SelectionManager) {
+  constructor(selectionManager: SelectionManager,  commandManager: CommandManager) {
     this.colWrapper = document.querySelector(".col-label-wrapper") as HTMLElement;
     this.canvas = document.createElement("canvas");
     this.canvas.classList.add("col-label");
     this.inputDiv = document.querySelector(".input-selection") as HTMLInputElement;
     this.selectionManager = selectionManager;
+    this.commandManager = commandManager;
     this.inputManager = null;
     this.scrollDiv = document.querySelector(".scrollable") as HTMLElement;
     this.colWrapper.appendChild(this.canvas);
@@ -342,7 +345,7 @@ export class ColumnLabelCanvas {
     this.selectionManager.ColSelection = { ...this.selectionManager.ColSelection, isColResizing: false };
     this.isSelectingCol = false;
     if (this.oldValue !== this.newValue) {
-      commandManager.pushColResizeCommand(this.newValue, this.oldValue, this.targetCol);
+      this.commandManager.pushColResizeCommand(this.newValue, this.oldValue, this.targetCol);
       this.oldValue = 0;
       this.newValue = 0;
     }

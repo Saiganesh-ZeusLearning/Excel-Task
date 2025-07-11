@@ -12,68 +12,70 @@ import { RowData } from "./DataStructures/RowData.js";
 import { ColData } from "./DataStructures/ColData.js";
 import { CellData } from "./DataStructures/CellData.js";
 import { MasterInteraction } from "./Interaction/MasterInteraction.js";
-import { RowSelectionHandler } from "./Interaction/RowSelectionHandler.js";
-import { RowResizingHandler } from "./Interaction/RowResizingHandler.js";
 
 const selectionManager = new SelectionManager();
+const commandManager = new CommandManager();
+
 export const rowData = new RowData();
 export const colData = new ColData();
 export const cellData = new CellData();
 
 
-const rowObj = new RowLabelCanvas(selectionManager);
 
-const colObj = new ColumnLabelCanvas(selectionManager);
+class ExcelApp {
+    private rowObj: RowLabelCanvas;
+    private colObj: ColumnLabelCanvas;
+    private gridObj: GridCanvas;
+    private inputManager: InputManager;
+    private excelRenderer: ExcelRenderer;
 
-const gridObj = new GridCanvas(selectionManager);
+    constructor() {
+        this.rowObj = new RowLabelCanvas(selectionManager, commandManager);
+        this.colObj = new ColumnLabelCanvas(selectionManager, commandManager);
+        this.gridObj = new GridCanvas(selectionManager);
 
-const inputManager = new InputManager(selectionManager);
+        this.inputManager = new InputManager(selectionManager, commandManager);
+        this.excelRenderer = new ExcelRenderer(this.rowObj, this.colObj, this.gridObj);
 
-const excelRenderer = new ExcelRenderer(rowObj, colObj, gridObj);
+        this.rowObj.intializeRender(this.inputManager);
+        this.colObj.intializeRender(this.inputManager);
 
-export const commandManager = new CommandManager();
-
-rowObj.intializeRender(inputManager);
-colObj.intializeRender(inputManager);
-
-const calculationsObj = new Calculations(selectionManager);
-new LoadDataManager(excelRenderer);
-new AutoScroller();
-
-
-const rowSelectionHandler = new RowSelectionHandler(selectionManager, excelRenderer);
-
-const rowResizingHandler =  new RowResizingHandler(selectionManager, excelRenderer);
-
-const masterInteraction = new MasterInteraction(rowObj, colObj, gridObj, rowSelectionHandler, rowResizingHandler);
+        new Calculations(selectionManager);
+        new LoadDataManager(this.excelRenderer);
+        new AutoScroller();
 
 
+        new MasterInteraction(this.rowObj, this.colObj, this.gridObj, selectionManager);
+        document.addEventListener("mousedown", () => {
+            this.excelRenderer.render();
+        })
 
-document.addEventListener("mousedown", () => {
-    excelRenderer.render();
-})
+        window.addEventListener("pointermove", () => {
+            if (selectionManager.getCellSelection.selectionState || selectionManager.RowSelection.isRowResizing || selectionManager.ColSelection.isColResizing || selectionManager.RowSelection.selectionState) {
+                this.excelRenderer.render();
+            }
+        })
 
-window.addEventListener("pointermove", () => {
-    if(selectionManager.getCellSelection.selectionState || selectionManager.RowSelection.isRowResizing || selectionManager.ColSelection.isColResizing){
-        excelRenderer.render();              
+        window.addEventListener("keydown", (e: KeyboardEvent) => {
+            // Ctrl+Z or Cmd+Z → Undo
+            if (e.ctrlKey && e.key.toLowerCase() === "z" && !e.shiftKey) {
+                e.preventDefault();
+                commandManager.undo();
+            }
+            // Ctrl+Shift+Z or Cmd+Shift+Z → Redo
+            else if (e.ctrlKey && e.key.toLowerCase() === "z" && e.shiftKey) {
+                e.preventDefault();
+                commandManager.redo();
+            }
+            // Ctrl+Y → Redo (Windows fallback)
+            else if (e.ctrlKey && e.key.toLowerCase() === "y") {
+                e.preventDefault();
+                commandManager.redo();
+            }
+            this.excelRenderer.render();
+        });
     }
-})
 
-window.addEventListener("keydown", (e: KeyboardEvent) => {
-        // Ctrl+Z or Cmd+Z → Undo
-        if (e.ctrlKey && e.key.toLowerCase() === "z" && !e.shiftKey) {
-            e.preventDefault();
-            commandManager.undo();
-        }
-        // Ctrl+Shift+Z or Cmd+Shift+Z → Redo
-        else if (e.ctrlKey && e.key.toLowerCase() === "z" && e.shiftKey) {
-            e.preventDefault();
-            commandManager.redo();
-        }
-        // Ctrl+Y → Redo (Windows fallback)
-        else if (e.ctrlKey && e.key.toLowerCase() === "y") {
-            e.preventDefault();
-            commandManager.redo();
-        }
-        excelRenderer.render();
-});
+}
+
+new ExcelApp;

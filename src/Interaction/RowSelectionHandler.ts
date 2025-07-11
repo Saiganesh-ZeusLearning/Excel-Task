@@ -6,16 +6,14 @@ export class RowSelectionHandler {
     private selectionState: boolean;
 
     private selectionManager: SelectionManager;
-    private excelRenderer: ExcelRenderer;
 
      /**
      * Handles mouse up pointer
      * @param selectionManager - selectionManager for selecting the rows.
      * @param excelRenderer - to rerender for each row selection.
      */
-    constructor(selectionManager: SelectionManager, excelRenderer: ExcelRenderer) {
+    constructor(selectionManager: SelectionManager) {
         this.selectionManager = selectionManager;
-        this.excelRenderer = excelRenderer;
         this.selectionState = false;
     }
 
@@ -45,7 +43,6 @@ export class RowSelectionHandler {
 
         this.selectionManager.RowSelection = { ...this.selectionManager.RowSelection, endRow: endRow }
 
-        this.excelRenderer.render();
     }
 
     /**

@@ -1,5 +1,6 @@
-import { cellData, colData, commandManager, rowData } from "../main.js";
+import { cellData, colData, rowData } from "../main.js";
 import { cellHeight, cellWidth, ColLabel, ExcelLeftOffset, ExcelTopOffset, LabelToCol } from "../Utils/GlobalVariables.js";
+import CommandManager from "./CommandManager.js";
 import { SelectionManager } from "./SelectionManager.js";
 
 /**
@@ -12,6 +13,7 @@ export class InputManager {
   private scrollDiv: HTMLElement;
   private mainCanvas: HTMLElement;
   private selectionManager: SelectionManager;
+  private commandManager: CommandManager;
 
   private prevTop: number = 0;
   private prevLeft: number = 0;
@@ -24,12 +26,13 @@ export class InputManager {
   private shiftRow;
   private shiftCol;
 
-  constructor( selectionManager: SelectionManager) {
+  constructor( selectionManager: SelectionManager, commandManager: CommandManager) {
     this.scrollDiv = document.querySelector(".scrollable") as HTMLElement;
     this.mainCanvas = document.querySelector(".main-canvas") as HTMLElement;
     this.inputDiv = document.querySelector(".input-selection") as HTMLInputElement;
     this.navRowCol = document.querySelector(".nav-row-col") as HTMLInputElement;
     this.selectionManager = selectionManager;
+    this.commandManager = commandManager;
     this.width = window.innerWidth;
     this.height = window.innerHeight;
     this.shiftRow = 0;
@@ -199,7 +202,7 @@ export class InputManager {
     if (this.inputDiv.value !== "") {
 
       // 1. Edit a cell
-      commandManager.pushCellEditCommand(this.inputDiv.value, cellData.get(this.prevRow + 1, this.prevCol + 1) ?? "", this.prevRow + 1, this.prevCol + 1);
+      this.commandManager.pushCellEditCommand(this.inputDiv.value, cellData.get(this.prevRow + 1, this.prevCol + 1) ?? "", this.prevRow + 1, this.prevCol + 1);
       cellData.set(this.prevRow + 1, this.prevCol + 1, this.inputDiv.value);
     }
   }

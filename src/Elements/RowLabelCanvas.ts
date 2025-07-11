@@ -1,6 +1,7 @@
+import CommandManager from "../Core/CommandManager.js";
 import { InputManager } from "../Core/InputManager.js";
 import { SelectionManager } from "../Core/SelectionManager.js";
-import { cellData, commandManager, rowData } from "../main.js";
+import { cellData, rowData } from "../main.js";
 import { CanvasLeftOffset, cellHeight, totalVisibleRows } from "../Utils/GlobalVariables.js";
 
 /**
@@ -14,6 +15,7 @@ export class RowLabelCanvas {
 
   private selectionManager: SelectionManager | null;
   private inputManager: InputManager | null;
+  private commandManager: CommandManager | null;
 
   /** Container element for the row label canvas */
   private rowWrapper: HTMLElement;
@@ -42,11 +44,12 @@ export class RowLabelCanvas {
    * Initializes the RowLabelCanvas class
    * @param rowId - ID of the canvas element in DOM
    */
-  constructor(selectionManager: SelectionManager) {
+  constructor(selectionManager: SelectionManager, commandManager: CommandManager) {
     this.rowWrapper = document.querySelector(".row-label-wrapper") as HTMLElement;
     this.canvas = document.createElement("canvas") as HTMLCanvasElement;
     this.inputDiv = document.querySelector(".input-selection") as HTMLInputElement;
     this.selectionManager = selectionManager;
+    this.commandManager = commandManager;
     this.inputManager = null;
     this.canvas.classList.add("row-label");
     this.rowWrapper.appendChild(this.canvas);
@@ -347,7 +350,8 @@ export class RowLabelCanvas {
     this.selectionManager.RowSelection = { ...this.selectionManager.RowSelection, isRowResizing: false };
     this.isSelectingRow = false;
     if (this.oldValue !== this.newValue) {
-      commandManager.pushRowResizeCommand(this.newValue, this.oldValue, this.targetRow);
+      if(this.commandManager === null) return;
+      this.commandManager.pushRowResizeCommand(this.newValue, this.oldValue, this.targetRow);
       this.oldValue = 0;
       this.newValue = 0;
     }

@@ -1,4 +1,5 @@
 import { GridCanvas } from "../Core/GridCanvas.js";
+import { SelectionManager } from "../Core/SelectionManager.js";
 import { ColumnLabelCanvas } from "../Elements/ColumnLabelCanvas.js";
 import { RowLabelCanvas } from "../Elements/RowLabelCanvas.js";
 import { colData, rowData } from "../main.js";
@@ -21,14 +22,14 @@ export class MasterInteraction {
      * @param gridObj - Grid Label Canvas
      * @param rowSelectionHandler - rowSelectionHandler for handling selection of Rows.
      */
-    constructor(rowObj: RowLabelCanvas, colObj: ColumnLabelCanvas, gridObj: GridCanvas, rowSelectionHandler: RowSelectionHandler, rowResizingHandler: RowResizingHandler) {
+    constructor(rowObj: RowLabelCanvas, colObj: ColumnLabelCanvas, gridObj: GridCanvas, selectionManager: SelectionManager) {
 
         this.rowObj = rowObj;
         this.colObj = colObj;
         this.gridObj = gridObj;
-
-        this.rowSelectionHandler = rowSelectionHandler;
-        this.rowResizingHandler = rowResizingHandler;
+        
+        this.rowSelectionHandler = new RowSelectionHandler(selectionManager);
+        this.rowResizingHandler = new RowResizingHandler(selectionManager);
 
         this.rowObj.getRowCanvas.addEventListener("pointerdown", this.handleRowPointerDown.bind(this));
         this.colObj.getColCanvas.addEventListener("pointerdown", this.handleColPointerMove.bind(this));

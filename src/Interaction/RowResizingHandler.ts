@@ -7,11 +7,9 @@ export class RowResizingHandler {
     private isResizing: boolean;
 
     private selectionManager: SelectionManager;
-    private excelRenderer: ExcelRenderer;
 
-    constructor(selectionManager: SelectionManager, excelRenderer: ExcelRenderer) {
+    constructor(selectionManager: SelectionManager) {
         this.selectionManager = selectionManager;
-        this.excelRenderer = excelRenderer;
         this.isResizing = false;
     }
 
