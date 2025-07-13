@@ -1,147 +1,188 @@
 import { GridCanvas } from "../Core/GridCanvas.js";
-import { SelectionManager } from "../Core/SelectionManager.js";
+import { CellData } from "../DataStructures/CellData.js";
+import { ColData } from "../DataStructures/ColData.js";
+import { RowData } from "../DataStructures/RowData.js";
 import { ColumnLabelCanvas } from "../Elements/ColumnLabelCanvas.js";
 import { RowLabelCanvas } from "../Elements/RowLabelCanvas.js";
-import { colData, rowData } from "../main.js";
-import { cellHeight, cellWidth, totalVisibleCols, totalVisibleRows } from "../Utils/GlobalVariables.js";
-import { RowResizingHandler } from "./RowResizingHandler.js";
-import { RowSelectionHandler } from "./RowSelectionHandler.js";
+import { ColAddingHandler } from "./ColInteraction/ColAddingHandler.js";
+import { ColResizingHandler } from "./ColInteraction/ColResizingHandler.js";
+import { ColSelectionHandler } from "./ColInteraction/ColSelectionHandler.js";
+import { RowAddingHandler } from "./RowInteraction/RowAddingHandler.js";
+import { RowResizingHandler } from "./RowInteraction/RowResizingHandler.js";
+import { RowSelectionHandler } from "./RowInteraction/RowSelectionHandler.js";
+import { CellSelectionHandler } from "./GridInteraction/CellSelectionHandler.js";
+import { CurrentCellPosition } from "../Elements/CurrentCellPosition.js";
+import { ExcelRenderer } from "../Core/ExcelRenderer.js";
 
+/**
+ * MasterInteraction manages all user interaction handlers for the grid.
+ * It delegates pointer events to the appropriate feature handler.
+ */
 export class MasterInteraction {
 
-    private rowObj: RowLabelCanvas;
-    private colObj: ColumnLabelCanvas;
-    private gridObj: GridCanvas;
+    /** @type {RowSelectionHandler} Handles row selection interactions */
     private rowSelectionHandler: RowSelectionHandler;
+
+    /** @type {RowResizingHandler} Handles row resizing interactions */
     private rowResizingHandler: RowResizingHandler;
 
+    /** @type {RowAddingHandler} Handles adding new rows */
+    private rowAddingHandler: RowAddingHandler;
+
+    /** @type {ColSelectionHandler} Handles column selection interactions */
+    private colSelectionHandler: ColSelectionHandler;
+
+    /** @type {ColResizingHandler} Handles column resizing interactions */
+    private colResizingHandler: ColResizingHandler;
+
+    /** @type {ColAddingHandler} Handles adding new columns */
+    private colAddingHandler: ColAddingHandler;
+
+    /** @type {CellSelectionHandler} Handles cell selection interactions */
+    private cellSelectionHandler: CellSelectionHandler;
+
+    /** @type {any} Stores the currently active feature handler */
+    private currFeature: any;
+
+    /** @type {any[]} Stores all feature handlers for event delegation */
+    private totalFeatures: any[] = [];
+
     /**
-     * Handles mouse up pointer
-     * @param rowObj - Row Label Canvas
-     * @param colObj - Column Label Canvas
-     * @param gridObj - Grid Label Canvas
-     * @param rowSelectionHandler - rowSelectionHandler for handling selection of Rows.
+     * Initializes the MasterInteraction and all feature handlers.
+     * @param {RowLabelCanvas} rowObj Row label canvas instance
+     * @param {ColumnLabelCanvas} colObj Column label canvas instance
+     * @param {GridCanvas} gridObj Main grid canvas instance
+     * @param {CurrentCellPosition} currentCellPosition Utility for cell position calculation
+     * @param {RowData} rowData Row data model
+     * @param {ColData} colData Column data model
+     * @param {CellData} cellData Cell data model
+     * @param {ExcelRenderer} excelRenderer Responsible for rendering updates
      */
-    constructor(rowObj: RowLabelCanvas, colObj: ColumnLabelCanvas, gridObj: GridCanvas, selectionManager: SelectionManager) {
+    constructor(
+        rowObj: RowLabelCanvas,
+        colObj: ColumnLabelCanvas,
+        gridObj: GridCanvas,
+        currentCellPosition: CurrentCellPosition,
+        rowData: RowData,
+        colData: ColData,
+        cellData: CellData,
+        excelRenderer: ExcelRenderer,
+    ) {
+        /** Initializes row selection handler */
+        this.rowSelectionHandler = new RowSelectionHandler(
+            currentCellPosition,
+            rowObj,
+            rowData,
+            colData,
+            cellData,
+            excelRenderer,
+        );
 
-        this.rowObj = rowObj;
-        this.colObj = colObj;
-        this.gridObj = gridObj;
-        
-        this.rowSelectionHandler = new RowSelectionHandler(selectionManager);
-        this.rowResizingHandler = new RowResizingHandler(selectionManager);
+        /** Initializes row resizing handler */
+        this.rowResizingHandler = new RowResizingHandler(
+            rowObj,
+            rowData,
+            excelRenderer,
+        );
 
-        this.rowObj.getRowCanvas.addEventListener("pointerdown", this.handleRowPointerDown.bind(this));
-        this.colObj.getColCanvas.addEventListener("pointerdown", this.handleColPointerMove.bind(this));
+        /** Initializes row adding handler */
+        this.rowAddingHandler = new RowAddingHandler(
+            rowObj,
+            rowData,
+            cellData,
+            excelRenderer
+        );
 
-        window.addEventListener("pointermove", this.handleRowPointerMove.bind(this));
-        window.addEventListener("pointerup", this.handleRowPointerUp.bind(this));
+        /** Initializes column selection handler */
+        this.colSelectionHandler = new ColSelectionHandler(
+            currentCellPosition,
+            colObj,
+            rowData,
+            colData,
+            cellData,
+            excelRenderer,
+        );
+
+        /** Initializes column resizing handler */
+        this.colResizingHandler = new ColResizingHandler(
+            colObj,
+            colData,
+            excelRenderer,
+        );
+
+        /** Initializes column adding handler */
+        this.colAddingHandler = new ColAddingHandler(
+            colObj,
+            rowData,
+            colData,
+            cellData,
+            excelRenderer,
+        );
+
+        /** Initializes cell selection handler */
+        this.cellSelectionHandler = new CellSelectionHandler(
+            currentCellPosition,
+            gridObj,
+            cellData,
+            excelRenderer,
+        );
+
+        /** Sets the currently active feature handler to null */
+        this.currFeature = null;
+
+        /** Collects all feature handlers for event delegation */
+        this.totalFeatures.push(
+            this.rowSelectionHandler,
+            this.rowResizingHandler,
+            this.rowAddingHandler,
+            this.colSelectionHandler,
+            this.colResizingHandler,
+            this.colAddingHandler,
+            this.cellSelectionHandler
+        );
+
+        /** Attaches global pointer event listeners */
+        this.attachEventListeners();
     }
 
     /**
-     * Handles mouse up pointer
-     * @param e - Mouse event
-    */
-    private handleRowPointerUp(e: MouseEvent) {
-        this.rowSelectionHandler.handlePointerUpEvent(e);
+     * Attaches pointer event listeners to the window.
+     */
+    private attachEventListeners() {
+        window.addEventListener("pointerdown", this.handlePointerDown.bind(this));
+        window.addEventListener("pointermove", this.handlePointerMove.bind(this));
+        window.addEventListener("pointerup", this.handlePointerUp.bind(this));
     }
 
     /**
-     * Handles mouse down pointer for Row Label Canvas
-     * @param e - Mouse event
+     * Handles pointer down events and sets the active feature handler.
+     * @param {MouseEvent} e Mouse event
      */
-    private handleRowPointerDown(e: MouseEvent) {
-        const offsetY = e.offsetY;
-        const offsetX = e.offsetX;
-        let y = 0.5;
-
-        for (let i = 0; i < totalVisibleRows; i++) {
-            const row = this.rowObj.getStartRow + i;
-            const height = rowData.get(row)?.height ?? cellHeight;
-
-            // Resizing of Row
-            if (Math.abs(offsetY - (y + height)) <= 4 && offsetX > 20) {
-                let targetRow = row;
-                this.rowResizingHandler.handlePointerDownEvent(e, targetRow);
+    private handlePointerDown(e: MouseEvent) {
+        for (const feature of this.totalFeatures) {
+            if (feature.hitTest(e)) {
+                this.currFeature = feature;
                 break;
             }
-            
-            // Adding of Row
-            if (Math.abs(offsetY - (y + height)) <= 4 && offsetX < 20) {
-                break;
-            }
-            
-            // Selection of Row
-            if (offsetY >= y + 4 && offsetY <= y + height) {
-
-                this.rowSelectionHandler.handlePointerDownEvent(e);
-                break;
-            }
-
-            y += height;
         }
     }
 
+    /**
+     * Handles pointer move events and delegates to the active feature handler.
+     * @param {MouseEvent} e Mouse event
+     */
+    private handlePointerMove(e: MouseEvent) {
+        if (this.currFeature === null) return;
+        this.currFeature.handlePointerMoveEvent(e);
+    }
 
     /**
-     * Handles mouse move pointer for Row Label Canvas
-     * @param e - Mouse event
+     * Handles pointer up events and notifies the active feature handler.
+     * @param {MouseEvent} e Mouse event
      */
-    private handleRowPointerMove(e: MouseEvent) {
-        const offsetY = e.offsetY;
-        const offsetX = e.offsetX;
-        let y = 0.5;
-
-        for (let i = 0; i < totalVisibleRows; i++) {
-            const row = this.rowObj.getStartRow + i;
-            const height = rowData.get(row)?.height ?? cellHeight;
-
-            // Resizing of Row
-            if (Math.abs(offsetY - (y + height)) <= 4 && offsetX > 20) {
-                this.rowObj.getRowCanvas.style.cursor = "s-resize";
-                break;
-            }
-
-            // Adding of Row
-            if (Math.abs(offsetY - (y + height)) <= 4 && offsetX < 20) {
-                this.rowObj.getRowCanvas.style.cursor = "copy";
-                break;
-            }
-
-            // Selection of Row
-            if (offsetY >= y + 4 && offsetY <= y + height) {
-                this.rowObj.getRowCanvas.style.cursor = "url('../../build/style/cursor-right.png') 12 12, auto";
-
-                this.rowSelectionHandler.handlePointerMoveEvent(e);
-                break;
-            }
-            y += height;
-        }
+    private handlePointerUp(e: MouseEvent) {
+        if (this.currFeature === null) return;
+        this.currFeature.handlePointerUpEvent(e);
     }
 
-        /**
- * Handles mouse move pointer for Column Label Canvas
- * @param e - Mouse event
- */
-    private handleColPointerMove(e: MouseEvent) {
-        const offsetX = e.offsetX;
-        const offsetY = e.offsetY
-        let x = 0;
-
-        for (let i = 0; i < totalVisibleCols; i++) {
-            const col = this.colObj.getColStart + i;
-            const width = colData.get(col)?.width ?? cellWidth;
-
-            if (Math.abs(offsetX - (x + width)) <= 4 && offsetY > 9) {
-                console.log("resizing")
-                break;
-            }
-            if (Math.abs(offsetX - (x + width)) <= 4 && offsetY < 9) {
-                console.log("add-col")
-                break;
-            }
-
-            x += width;
-        }
-    }
 }

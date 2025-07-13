@@ -1,17 +1,23 @@
-import { cellData } from "../main.js";
-import { SelectionManager } from "../Core/SelectionManager.js";
+import { CellData } from "../DataStructures/CellData.js";
+import { RowData } from "../DataStructures/RowData.js";
+import { ColData } from "../DataStructures/ColData.js";
 
 export class Calculations {
     private optionSelector: HTMLSelectElement;
     private calculateBtn: HTMLElement;
     private output: HTMLInputElement;
-    private selectionManager: SelectionManager;
+    private rowData: RowData;
+    private colData: ColData;
+    private cellData: CellData;
 
-    constructor(selectionManager: SelectionManager) {
+
+    constructor(rowData: RowData, colData: ColData, cellData: CellData) {
+        this.rowData = rowData;
+        this.colData = colData;
+        this.cellData = cellData;
         this.optionSelector = document.querySelector("#formulas") as HTMLSelectElement;
         this.calculateBtn = document.querySelector(".calculateBtn") as HTMLElement;
         this.output = document.querySelector(".output") as HTMLInputElement;
-        this.selectionManager = selectionManager;
         this.calculateBtn.addEventListener("click", () => {
 
             switch (this.optionSelector.value) {
@@ -43,81 +49,82 @@ export class Calculations {
     private DynamicCalculations(selector: string): number {
         let res = 0;
         let cnt = 0;
-        if(selector === "max"){
+        if (selector === "max") {
             res = -Infinity;
-        }else if(selector === "min"){
+        } else if (selector === "min") {
             res = Infinity
         }
-        if (this.selectionManager.RowSelection.selectionState) {
-            let rowStart = this.selectionManager.RowSelection.startRow + 1;
-            let rowEnd = this.selectionManager.RowSelection.endRow + 1;
-            for (let [coordinates, data] of cellData.entries()) {
+        if (this.rowData.RowSelection.selectionState) {
+            let rowStart = this.rowData.RowSelection.startRow + 1;
+            let rowEnd = this.rowData.RowSelection.endRow + 1;
+            for (let [coordinates, data] of this.cellData.entries()) {
                 let row = Number(coordinates.split("_")[0]);
                 if (row >= rowStart && row <= rowEnd) {
                     if (isFinite(Number(data))) {
                         if (selector === "count") {
                             res++;
-                        }else if(selector === "sum"){
+                        } else if (selector === "sum") {
                             res += Number(data);
-                        }else if(selector === "max"){
+                        } else if (selector === "max") {
                             res = Math.max(Number(data), res);
-                        }else if(selector === "min"){
+                        } else if (selector === "min") {
                             res = Math.min(Number(data), res);
-                        }else if(selector === "average"){
+                        } else if (selector === "average") {
                             res += Number(data);
                             cnt++;
                         }
                     }
                 }
             }
-        } else if (this.selectionManager.ColSelection.selectionState) {
-            let colStart = this.selectionManager.ColSelection.startCol + 1;
-            let colEnd = this.selectionManager.ColSelection.endCol + 1;
-            for (let [coordinates, data] of cellData.entries()) {
+        } else if (this.colData.ColSelection.selectionState) {
+            let colStart = this.colData.ColSelection.startCol + 1;
+            let colEnd = this.colData.ColSelection.endCol + 1;
+            for (let [coordinates, data] of this.cellData.entries()) {
                 let col = Number(coordinates.split("_")[1]);
                 if (col >= colStart && col <= colEnd) {
                     if (isFinite(Number(data))) {
                         if (selector === "count") {
                             res++;
-                        }else if(selector === "sum"){
+                        } else if (selector === "sum") {
                             res += Number(data);
-                        }else if(selector === "max"){
+                        } else if (selector === "max") {
                             res = Math.max(Number(data), res);
-                        }else if(selector === "min"){
+                        } else if (selector === "min") {
                             res = Math.min(Number(data), res);
-                        }else if(selector === "average"){
+                        } else if (selector === "average") {
                             res += Number(data);
                             cnt++;
                         }
                     }
                 }
             }
-        } else if (this.selectionManager.getCellSelection.selectionState) {
+        } 
+        else if (this.cellData.getCellSelection.selectionState) {
 
             const {
                 startRow,
                 endRow,
                 startCol,
                 endCol,
-            } = this.selectionManager.getCellSelection;
+            } = this.cellData.getCellSelection;
 
             const [minStartRow, maxEndRow] = this.getSortedRange(startRow, endRow);
             const [minStartCol, maxEndCol] = this.getSortedRange(startCol, endCol);
 
-            for (let [coordinates, data] of cellData.entries()) {
+            for (let [coordinates, data] of this.cellData.entries()) {
                 let row = Number(coordinates.split("_")[0]);
                 let col = Number(coordinates.split("_")[1]);
                 if (col >= minStartCol && col <= maxEndCol && row >= minStartRow && row <= maxEndRow) {
                     if (isFinite(Number(data))) {
                         if (selector === "count") {
                             res++;
-                        }else if(selector === "sum"){
+                        } else if (selector === "sum") {
                             res += Number(data);
-                        }else if(selector === "max"){
+                        } else if (selector === "max") {
                             res = Math.max(Number(data), res);
-                        }else if(selector === "min"){
+                        } else if (selector === "min") {
                             res = Math.min(Number(data), res);
-                        }else if(selector === "average"){
+                        } else if (selector === "average") {
                             res += Number(data);
                             cnt++;
                         }
@@ -125,6 +132,6 @@ export class Calculations {
                 }
             }
         }
-        return selector === "average" ? res/cnt : res;
+        return selector === "average" ? res / cnt : res;
     }
 }

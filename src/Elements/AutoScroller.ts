@@ -1,3 +1,7 @@
+import { CellData } from "../DataStructures/CellData";
+import { ColData } from "../DataStructures/ColData";
+import { RowData } from "../DataStructures/RowData";
+
 export class AutoScroller {
   private scrollableDiv: HTMLElement;
   private isSelecting: boolean = false;
@@ -8,7 +12,15 @@ export class AutoScroller {
   private readonly maxSpeed = 15;
   private readonly maxDistance = 100;
 
-  constructor() {
+  private rowData: RowData;
+  private colData: ColData;
+  private cellData: CellData;
+
+  constructor(rowData: RowData, colData: ColData, cellData: CellData) {
+    this.rowData = rowData;
+    this.colData = colData;
+    this.cellData = cellData;
+
     this.scrollableDiv = document.querySelector(".scrollable") as HTMLElement;
     this.attachEvents();
   }
@@ -41,34 +53,9 @@ export class AutoScroller {
         dx = -this.calculateSpeed(rect.left - this.pointerX);
       }
 
-
-      // // === Calculate Column ===
-      // let x = 0, col = 0;
-      // while (x <= selectionManager.clientX) {
-      //   const colWidth = colData.get(col)?.width ?? cellWidth;
-      //   if (x + colWidth > selectionManager.clientX) break;
-      //   x += colWidth;
-      //   col++;
+      // if(this.rowData.RowSelection.selectionState){
+      //   console.log(this.pointerX, this.pointerY)
       // }
-
-      // // === Calculate Row ===
-      // let y = 50, row = 0;
-      // while (y <= selectionManager.clientY) {
-      //   const rowHeight = rowData.get(row)?.height ?? cellHeight;
-      //   if (y + rowHeight > selectionManager.clientY) break;
-      //   y += rowHeight;
-      //   row++;
-      // }
-
-      // selectionManager.getCellSelection.currRow = row;
-      // selectionManager.getCellSelection.currCol = col;
-      // console.log(row, col)
-      // if (!selectionManager.selectingMultipleCells) return;
-      // console.log(selectionManager.selectingMultipleCells)
-
-      // selectionManager.getCellSelection.endRow = selectionManager.getCellSelection.currRow;
-      // selectionManager.getCellSelection.endCol = selectionManager.getCellSelection.currCol;
-      // excelRenderer.render();
 
       this.scrollableDiv.scrollBy(dx, dy);
       this.scrollId = requestAnimationFrame(autoScroll);

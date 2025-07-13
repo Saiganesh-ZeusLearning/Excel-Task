@@ -1,8 +1,7 @@
-import CommandManager from "../Core/CommandManager.js";
-import { InputManager } from "../Core/InputManager.js";
-import { SelectionManager } from "../Core/SelectionManager.js";
-import { cellData, colData} from "../main.js";
-import { CanvasTopOffset, cellWidth, ColLabel, totalVisibleCols } from "../Utils/GlobalVariables.js";
+import { CellData } from "../DataStructures/CellData.js";
+import { ColData } from "../DataStructures/ColData.js";
+import { cellWidth, ColLabel, totalVisibleCols } from "../Utils/GlobalVariables.js";
+import { RowData } from "../DataStructures/RowData.js";
 
 /**
  * Class responsible for rendering and interacting with the column label canvas (A, B, C...).
@@ -10,11 +9,6 @@ import { CanvasTopOffset, cellWidth, ColLabel, totalVisibleCols } from "../Utils
 export class ColumnLabelCanvas {
   /** @type {HTMLCanvasElement} Canvas element for column labels */
   private canvas: HTMLCanvasElement;
-  private inputDiv: HTMLInputElement;
-  private scrollDiv: HTMLElement;
-  private selectionManager: SelectionManager | null;
-  private inputManager: InputManager | null;
-  private commandManager: CommandManager;
 
   /** @type {HTMLElement} Wrapper for column label canvas */
   private colWrapper: HTMLElement;
@@ -22,72 +16,79 @@ export class ColumnLabelCanvas {
   /** @type {number} Starting column index for rendering */
   private startCol: number;
 
-  /** @type {number} Height of the label area */
+  /** @type {number} Height of the label area (in pixels) */
   private height = 24;
 
-  /** @type {number} Total canvas width based on totalCols and cellWidth */
+  /** @type {number} Total canvas width based on totalVisibleCols and cellWidth */
   private width = totalVisibleCols * cellWidth + 1;
 
+  /** @type {RowData} Reference to row data for selection state */
+  private rowData: RowData;
 
-  /** @type {number} X coordinate where resize started */
-  private resizeStartX = 0;
+  /** @type {ColData} Reference to column data for column widths and selection */
+  private colData: ColData;
 
-  /** @type {number} Index of the column being resized */
-  private targetCol = -1;
-
-  /** @type {boolean} Prevents click action immediately after resize */
-  private skipClick: boolean;
-
-  private oldValue: number;
-  private newValue: number;
-
-  private isSelectingCol: boolean;
+  /** @type {CellData} Reference to cell data for cell selection */
+  private cellData: CellData;
 
   /**
    * Initializes the ColumnLabelCanvas instance.
-   * @param {number} colId - Column index to start drawing from.
+   * @param {RowData} rowData - Row data object for row selection state.
+   * @param {ColData} colData - Column data object for column widths and selection state.
+   * @param {CellData} cellData - Cell data object for cell selection state.
    */
-  constructor(selectionManager: SelectionManager,  commandManager: CommandManager) {
-    this.colWrapper = document.querySelector(".col-label-wrapper") as HTMLElement;
-    this.canvas = document.createElement("canvas");
-    this.canvas.classList.add("col-label");
-    this.inputDiv = document.querySelector(".input-selection") as HTMLInputElement;
-    this.selectionManager = selectionManager;
-    this.commandManager = commandManager;
-    this.inputManager = null;
-    this.scrollDiv = document.querySelector(".scrollable") as HTMLElement;
-    this.colWrapper.appendChild(this.canvas);
-    this.startCol = 0;
-    this.oldValue = 0;
-    this.newValue = 0;
-    this.isSelectingCol = false;
-    this.skipClick = false;
+  constructor(
+    rowData: RowData,
+    colData: ColData,
+    cellData: CellData,
+  ) {
+    /** Store reference to row data */
+    this.rowData = rowData;
 
+    /** Store reference to column data */
+    this.colData = colData;
+
+    /** Store reference to cell data */
+    this.cellData = cellData;
+
+    /** Get the wrapper element for the column labels */
+    this.colWrapper = document.querySelector(".col-label-wrapper") as HTMLElement;
+
+    /** Create the canvas element for column labels */
+    this.canvas = document.createElement("canvas");
+
+    /** Add a CSS class for styling */
+    this.canvas.classList.add("col-label");
+
+    /** Append the canvas to the wrapper */
+    this.colWrapper.appendChild(this.canvas);
+
+    /** Initialize the starting column index */
+    this.startCol = 0;
+
+    /** Get the 2D context for drawing */
     const ctx = this.canvas.getContext("2d") as CanvasRenderingContext2D;
 
+    /** Initialize the canvas size and scaling */
     this.initCanvas(ctx);
+
+    /** Draw the initial column labels */
     this.drawColumns(ctx, 0);
-
-    // Attach event listeners
-    this.canvas.addEventListener("mousedown", this.handleMouseDownResizing.bind(this));
-    this.canvas.addEventListener("mousedown", this.handleMouseDownSelection.bind(this));
-    window.addEventListener("mousemove", this.handleMouseMove.bind(this));
-    window.addEventListener("mouseup", this.handleMouseUp.bind(this));
-  }
-
-  intializeRender(inputManager: InputManager) {
-    this.inputManager = inputManager;
   }
 
   /**
-   * Getter to access the column canvas.
-   * @returns {HTMLCanvasElement} Canvas element.
+   * Getter to access the column canvas element.
+   * @returns {HTMLCanvasElement} The canvas element for column labels.
    */
   get getColCanvas() {
     return this.canvas;
   }
 
-  get getColStart(){
+  /**
+   * Getter to access the starting column index.
+   * @returns {number} The starting column index for rendering.
+   */
+  get getColStart() {
     return this.startCol;
   }
 
@@ -96,50 +97,80 @@ export class ColumnLabelCanvas {
    * @param {CanvasRenderingContext2D} ctx - 2D drawing context.
    */
   private initCanvas(ctx: CanvasRenderingContext2D): void {
+    /** @type {number} Device pixel ratio for high-DPI screens */
     const dpr = window.devicePixelRatio || 1;
+
+    /** Set the canvas width and height based on device pixel ratio */
     this.canvas.width = this.width * dpr;
     this.canvas.height = this.height * dpr;
+
+    /** Set the CSS width and height for proper display */
     this.canvas.style.width = `${this.width}px`;
     this.canvas.style.height = `${this.height}px`;
+
+    /** Scale the drawing context for crisp rendering */
     ctx.scale(dpr, dpr);
   }
 
   /**
    * Draws the column headers and vertical grid lines.
+   * Handles highlighting for selected columns, rows, or cells.
    * @param {CanvasRenderingContext2D} ctx - 2D drawing context.
    * @param {number} startCol - Column index to start drawing from.
    */
   drawColumns(ctx: CanvasRenderingContext2D, startCol: number): void {
+    /** Clear the entire canvas before redrawing */
     ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
+    /** @type {number} The current X position for drawing */
     let x = -0.5;
 
+    /** Iterate through all visible columns */
     for (let col = startCol; col <= startCol + totalVisibleCols; col++) {
+      /** Update the starting column index */
       this.startCol = startCol;
-      const colInfo = colData.get(col);
-      const nxtWidth = colInfo ? colInfo.width : cellWidth;
-      if (this.selectionManager === null) return;
-      const selectedCells = this.selectionManager.getCellSelection;
 
+      /** @type {any} Column info (width, etc.) from colData */
+      const colInfo = this.colData.get(col);
+
+      /** @type {number} Width of the current column */
+      const nxtWidth = colInfo ? colInfo.width : cellWidth;
+
+      /** @type {any} Selected cell range and state */
+      const selectedCells = this.cellData.getCellSelection;
+
+      /** @type {number} Start index of selected columns */
       let startColIndex = selectedCells.startCol;
+
+      /** @type {number} End index of selected columns */
       let endColIndex = selectedCells.endCol;
+
+      /** @type {boolean} Whether a cell selection is active */
       let selectionState = selectedCells.selectionState;
 
+      /** Swap start/end if selection is reversed */
       if (startColIndex > endColIndex) {
-        [startColIndex, endColIndex] = [endColIndex, startColIndex]
+        [startColIndex, endColIndex] = [endColIndex, startColIndex];
       }
-      if (this.selectionManager === null) return;
-      let startMin = Math.min(this.selectionManager.ColSelection.startCol, this.selectionManager.ColSelection.endCol);
-      let startMax = Math.max(this.selectionManager.ColSelection.startCol, this.selectionManager.ColSelection.endCol);
-      let colSelectionState = this.selectionManager.ColSelection.selectionState;
-      // Highlight logic
+
+      /** @type {number} Minimum selected column index for column selection */
+      let startMin = Math.min(this.colData.ColSelection.startCol, this.colData.ColSelection.endCol);
+
+      /** @type {number} Maximum selected column index for column selection */
+      let startMax = Math.max(this.colData.ColSelection.startCol, this.colData.ColSelection.endCol);
+
+      /** @type {boolean} Whether a column selection is active */
+      let colSelectionState = this.colData.ColSelection.selectionState;
+
+      // ---- Highlighting logic ----
       if ((colSelectionState && startMin <= col && startMax >= col)) {
+        // Column selection highlight
         ctx.fillStyle = "#107C41";
         ctx.fillRect(x, 0, nxtWidth, 24);
         ctx.fillStyle = "white";
         ctx.font = "bold 14px Arial";
 
-        // Draw horizontal line
+        // Draw horizontal line at the bottom
         ctx.beginPath();
         ctx.moveTo(x, 23);
         ctx.lineTo(x + nxtWidth, 23);
@@ -148,18 +179,18 @@ export class ColumnLabelCanvas {
         ctx.stroke();
         ctx.strokeStyle = "#A0D8B9";
 
-        // Draw vertical line
+        // Draw vertical line at the left edge
         ctx.beginPath();
         ctx.moveTo(x, -1.5);
         ctx.lineTo(x, this.canvas.height - 1.5);
         ctx.lineWidth = 1;
         ctx.stroke();
-      } else if ((this.selectionManager.RowSelection.selectionState) || (selectionState && startColIndex <= col && endColIndex >= col)) {
+      } else if ((this.rowData.RowSelection.selectionState) || (selectionState && startColIndex <= col && endColIndex >= col)) {
+        // Row or cell selection highlight
         ctx.fillStyle = "#CAEAD8";
         ctx.fillRect(x, 0, nxtWidth, 24);
         ctx.fillStyle = "green";
         ctx.font = "12px sans-serif";
-
 
         // Draw vertical line
         ctx.beginPath();
@@ -169,8 +200,7 @@ export class ColumnLabelCanvas {
         ctx.lineWidth = 1;
         ctx.stroke();
 
-
-        // Draw horizontal line
+        // Draw horizontal line at the bottom
         ctx.beginPath();
         ctx.moveTo(x, 23);
         ctx.lineTo(x + nxtWidth + 1, 23);
@@ -178,12 +208,13 @@ export class ColumnLabelCanvas {
         ctx.strokeStyle = "green";
         ctx.stroke();
       } else {
+        // Default (unselected) state
         ctx.fillStyle = "#F5F5F5";
         ctx.fillRect(x, 0, nxtWidth, 24);
         ctx.fillStyle = "#000";
         ctx.font = "12px sans-serif";
 
-        // Draw horizontal line
+        // Draw horizontal grid line
         ctx.beginPath();
         ctx.lineWidth = 1;
         ctx.moveTo(x, 23.5);
@@ -191,13 +222,13 @@ export class ColumnLabelCanvas {
         ctx.strokeStyle = "#ddd";
         ctx.stroke();
 
+        // Draw vertical grid line with special highlight if at selection boundary
         if (endColIndex == col - 1) {
           ctx.strokeStyle = "#A0D8B9";
         } else {
           ctx.strokeStyle = "#ddd";
         }
 
-        // Draw vertical line
         ctx.beginPath();
         ctx.moveTo(x, 0.5);
         ctx.lineTo(x, this.canvas.height + 0.5);
@@ -205,151 +236,14 @@ export class ColumnLabelCanvas {
         ctx.stroke();
       }
 
-      // Draw label
+      /** @type {string} The label for the current column (A, B, C, ...) */
       const label = ColLabel(1 + col);
+
+      /** Draw the column label centered in the cell */
       ctx.fillText(label, x + nxtWidth / 2 - 5, 16);
 
+      /** Advance X position for next column */
       x += nxtWidth;
     }
-
-  }
-
-  /**
-   * Handles column click event to select column.
-   * @param {MouseEvent} e - Mouse click event.
-   */
-  private handleMouseDownSelection(e: MouseEvent) {
-    e.preventDefault();
-    if (this.skipClick) return;
-    let x = 0.5;
-    let offsetX = e.offsetX;
-
-    for (let i = 0; i < totalVisibleCols; i++) {
-      const col = this.startCol + i;
-      const width = colData.get(col)?.width ?? cellWidth;
-
-      if (offsetX >= x + 4 && offsetX <= x + width) {
-        this.inputDiv.style.left = `${CanvasTopOffset}px`;
-        this.isSelectingCol = true;
-        if (this.selectionManager === null) return;
-        this.selectionManager.RowSelection = { ...this.selectionManager.RowSelection, selectionState: false };
-        this.selectionManager.ColSelection = { ...this.selectionManager.ColSelection, startCol: this.selectionManager.getCellSelection.currCol, endCol: this.selectionManager.getCellSelection.currCol, selectionState: true };
-        this.selectionManager.set(0, this.selectionManager.ColSelection.startCol, 0, this.selectionManager.ColSelection.startCol, true);
-        if (this.inputManager === null) return;
-        this.inputManager.setInputLocation(0, this.selectionManager.ColSelection.startCol);
-        this.inputDiv.style.caretColor = "transparent";
-        return;
-      }
-      x += width;
-    }
-  }
-
-  /**
-   * Handles mouse down event to initiate column resizing.
-   * @param {MouseEvent} e - Mouse down event.
-   */
-  private handleMouseDownResizing(e: MouseEvent) {
-    const offsetX = e.offsetX;
-    const offsetY = e.offsetY
-    let x = 0;
-
-    this.skipClick = false;
-
-    if (this.selectionManager === null) return;
-    this.selectionManager.set(-100, -100, -100, -100, false);
-
-    for (let i = 0; i < totalVisibleCols; i++) {
-      const col = this.startCol + i;
-      const width = colData.get(col)?.width ?? cellWidth;
-
-      if (Math.abs(offsetX - (x + width)) <= 4 && offsetY > 9) {
-        this.selectionManager.ColSelection = { ...this.selectionManager.ColSelection, isColResizing: true };
-        this.resizeStartX = offsetX;
-        this.targetCol = col;
-        this.oldValue = colData.get(this.targetCol)?.width ?? 100;
-
-        this.skipClick = true;
-        break;
-      }
-      if (Math.abs(offsetX - (x + width)) <= 4 && offsetY < 9) {
-        this.skipClick = true;
-        cellData.insertColumnAt(col + 2);
-        colData.insertColumnAt(col + 1);
-        if (this.selectionManager === null) return;
-        this.selectionManager.set(0, col + 1, 0, col + 1, true);
-        this.selectionManager.ColSelection = { endCol: col + 1, startCol: col + 1, selectionState: true, isColResizing: false }
-        break;
-      }
-
-      x += width;
-    }
-  }
-
-  /**
-   * Handles mouse move event for column resizing and cursor feedback.
-   * @param {MouseEvent} e - Mouse move event.
-   */
-  private handleMouseMove(e: MouseEvent) {
-    const offsetX = e.offsetX;
-    const offsetY = e.offsetY
-    let x = 0;
-    let found = false;
-    let isColAdd = false;
-
-    for (let i = 0; i < totalVisibleCols; i++) {
-      const col = this.startCol + i;
-      const width = colData.get(col)?.width ?? cellWidth;
-
-      if (Math.abs(offsetX - (x + width)) <= 4 && offsetY > 9) {
-        this.canvas.style.cursor = "w-resize";
-        found = true;
-        break;
-      }
-      if (Math.abs(offsetX - (x + width)) <= 4 && offsetY < 9) {
-        this.canvas.style.cursor = "copy";
-        found = true;
-        isColAdd = true;
-        break;
-      }
-
-      x += width;
-    }
-
-
-    if (this.isSelectingCol) {
-      if (this.selectionManager === null) return;
-      this.selectionManager.ColSelection = { ...this.selectionManager.ColSelection, endCol: this.selectionManager.getCellSelection.currCol };
-    }
-
-    if (!found && !this.selectionManager?.ColSelection.isColResizing) {
-      this.canvas.style.cursor = "url('../../build/style/cursor-down.png') 12 12, auto";
-    }
-
-    if (this.selectionManager?.ColSelection.isColResizing && this.targetCol !== -1) {
-      const diff = offsetX - this.resizeStartX;
-      const currentWidth = colData.get(this.targetCol)?.width ?? cellWidth;
-      const newWidth = Math.max(30, currentWidth + diff);
-      this.newValue = newWidth;
-      colData.set(this.targetCol, newWidth);
-      this.resizeStartX = offsetX;
-      if (this.inputManager === null) return;
-      this.inputManager.setInputLocation(0, this.selectionManager.ColSelection.startCol);
-    }
-  }
-
-  /**
-   * Handles mouse up event to finalize column resizing.
-   */
-  private handleMouseUp() {
-    if (this.selectionManager === null) return;
-    this.selectionManager.ColSelection = { ...this.selectionManager.ColSelection, isColResizing: false };
-    this.isSelectingCol = false;
-    if (this.oldValue !== this.newValue) {
-      this.commandManager.pushColResizeCommand(this.newValue, this.oldValue, this.targetCol);
-      this.oldValue = 0;
-      this.newValue = 0;
-    }
-    this.targetCol = -1;
-    this.scrollDiv.style.cursor = "cell";
   }
 }
