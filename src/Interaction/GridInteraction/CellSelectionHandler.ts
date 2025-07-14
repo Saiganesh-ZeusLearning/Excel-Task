@@ -58,10 +58,7 @@ export class CellSelectionHandler {
      * @returns {boolean} True if this handler should process the event
      */
     hitTest(e: MouseEvent) {
-        // Only respond if the event target is the grid canvas
         if (e.target !== this.gridObj.getGridCanvas) return false;
-
-        this.handlePointerDownEvent(e);
         return true;
     }
 
@@ -72,10 +69,8 @@ export class CellSelectionHandler {
     handlePointerDownEvent(e: MouseEvent) {
         this.selectionState = true;
 
-        // Get the row and column index from the mouse event
         const { row, col } = this.currentCellPosition.get(e);
 
-        // Set cell selection state
         this.cellData.setCellSelection = {
             startCol: col,
             endCol: col,
@@ -83,7 +78,6 @@ export class CellSelectionHandler {
             endRow: row,
             selectionState: true,
         }
-        // Trigger re-render
         this.excelRenderer.render();
     }
 
@@ -94,16 +88,13 @@ export class CellSelectionHandler {
     handlePointerMoveEvent(e: MouseEvent) {
         if (!this.selectionState) return;
 
-        // Get the current row and column index from the mouse event
         const { row, col } = this.currentCellPosition.get(e);
 
-        // Update selection range
         this.cellData.setCellSelection = {
             ...this.cellData.getCellSelection,
             endCol: col,
             endRow: row,
         }
-        // Trigger re-render
         this.excelRenderer.render();
     }
 
@@ -113,6 +104,13 @@ export class CellSelectionHandler {
      */
     handlePointerUpEvent(e: MouseEvent) {
         this.selectionState = false;
-        this.gridObj.getGridCanvas.style.cursor = "cell";
+    }
+
+    getCursor(e: MouseEvent) {
+        if (this.hitTest(e)) {
+            this.gridObj.getGridCanvas.style.cursor = "cell";
+            return true;
+        }
+        return false;
     }
 }

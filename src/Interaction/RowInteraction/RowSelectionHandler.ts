@@ -1,6 +1,5 @@
 import { RowData } from "../../DataStructures/RowData.js";
 import { RowLabelCanvas } from "../../Elements/RowLabelCanvas.js";
-import { cellHeight, totalVisibleRows } from "../../Utils/GlobalVariables.js";
 import { ColData } from "../../DataStructures/ColData.js";
 import { CellData } from "../../DataStructures/CellData.js";
 import { CurrentCellPosition } from "../../Elements/CurrentCellPosition.js";
@@ -77,28 +76,9 @@ export class RowSelectionHandler {
      * @returns {boolean} True if this handler should process the event
      */
     hitTest(e: MouseEvent) {
-        // Only respond if the event target is the row label canvas
         if (e.target !== this.rowObj.getRowCanvas) return false;
 
-        const offsetY = e.offsetY;
-        const offsetX = e.offsetX;
-
-        let y = 0;
-
-        // Iterate through all visible rows to find which row was clicked
-        for (let i = 0; i < totalVisibleRows; i++) {
-            const row = this.rowObj.getStartRow + i;
-            const height = this.rowData.get(row)?.height ?? cellHeight;
-
-            // If pointer is within the row label area, start selection
-            if (offsetY >= y + 4 && offsetY <= y + height && offsetX > 10) {
-                this.rowObj.getRowCanvas.style.cursor = "url('../../build/style/cursor-right.png') 12 12, auto";
-                this.handlePointerDownEvent(e);
-                return true;
-            }
-            y += height;
-        }
-        return false;
+        return true;
     }
 
     /**
@@ -106,18 +86,14 @@ export class RowSelectionHandler {
      * @param {MouseEvent} e Mouse event
      */
     handlePointerDownEvent(e: MouseEvent) {
-        // Get the row index from the mouse event
         const { row } = this.currentCellPosition.get(e);
 
-        // Clear any active column or cell selections
         this.colData.ColSelection = { ...this.colData.ColSelection, selectionState: false };
         this.cellData.setCellSelection = { ...this.cellData.getCellSelection, selectionState: false };
 
-        // Set row selection state
         this.rowData.RowSelection = { startRow: row, endRow: row, selectionState: true, isRowResizing: false };
         this.selectionState = true;
 
-        // Trigger re-render
         this.excelRenderer.render();
     }
 
@@ -128,13 +104,10 @@ export class RowSelectionHandler {
     handlePointerMoveEvent(e: MouseEvent) {
         if (!this.selectionState) return;
 
-        // Get the current row index from the mouse event
         const { row } = this.currentCellPosition.get(e);
 
-        // Update selection range
         this.rowData.RowSelection = { ...this.rowData.RowSelection, endRow: row };
 
-        // Trigger re-render
         this.excelRenderer.render();
     }
 
@@ -144,6 +117,13 @@ export class RowSelectionHandler {
      */
     handlePointerUpEvent(e: MouseEvent) {
         this.selectionState = false;
-        this.rowObj.getRowCanvas.style.cursor = "default";
+    }
+
+    getCursor(e: MouseEvent){
+        if(this.hitTest(e)){
+            this.rowObj.getRowCanvas.style.cursor = "url('../../build/style/cursor-right.png') 12 12, auto";
+            return true;
+        }
+        return false;
     }
 }

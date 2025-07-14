@@ -77,28 +77,9 @@ export class ColSelectionHandler {
      * @returns {boolean} True if this handler should process the event
      */
     hitTest(e: MouseEvent) {
-        // Only respond if the event target is the column label canvas
         if (e.target !== this.colObj.getColCanvas) return false;
 
-        const offsetY = e.offsetY;
-        const offsetX = e.offsetX;
-
-        let x = 0;
-
-        // Iterate through all visible columns to find which column was clicked
-        for (let i = 0; i < totalVisibleCols; i++) {
-            const col = this.colObj.getColStart + i;
-            const width = this.colData.get(col)?.width ?? cellWidth;
-
-            // If pointer is within the column label area, start selection
-            if (offsetX >= x + 4 && offsetX <= x + width && offsetY > 5) {
-                this.colObj.getColCanvas.style.cursor = "url('../../build/style/cursor-down.png') 12 12, auto";
-                this.handlePointerDownEvent(e);
-                return true;
-            }
-            x += width;
-        }
-        return false;
+        return true;
     }
 
     /**
@@ -106,18 +87,14 @@ export class ColSelectionHandler {
      * @param {MouseEvent} e Mouse event
      */
     handlePointerDownEvent(e: MouseEvent) {
-        // Clear any active row or cell selections
         this.rowData.RowSelection = { ...this.rowData.RowSelection, selectionState: false }
         this.cellData.setCellSelection = { ...this.cellData.getCellSelection, selectionState: false }
 
-        // Get the column index from the mouse event
         const { col } = this.currentCellPosition.get(e);
 
-        // Set column selection state
         this.colData.ColSelection = { endCol: col, startCol: col, selectionState: true, isColResizing: false }
 
         this.selectionState = true;
-        // Trigger re-render
         this.excelRenderer.render();
     }
 
@@ -128,12 +105,9 @@ export class ColSelectionHandler {
     handlePointerMoveEvent(e: MouseEvent) {
         if (!this.selectionState) return;
 
-        // Get the current column index from the mouse event
         const { col } = this.currentCellPosition.get(e);
 
-        // Update selection range
         this.colData.ColSelection = { ...this.colData.ColSelection, endCol: col }
-        // Trigger re-render
         this.excelRenderer.render();
     }
 
@@ -143,6 +117,13 @@ export class ColSelectionHandler {
      */
     handlePointerUpEvent(e: MouseEvent) {
         this.selectionState = false;
-        this.colObj.getColCanvas.style.cursor = "default";
+    }
+
+    getCursor(e: MouseEvent) {
+        if (this.hitTest(e)) {
+            this.colObj.getColCanvas.style.cursor = "url('../../build/style/cursor-down.png') 12 12, auto";
+            return true;
+        }
+        return false;
     }
 }

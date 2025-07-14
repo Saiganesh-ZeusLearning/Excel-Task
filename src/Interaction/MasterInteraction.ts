@@ -20,27 +20,6 @@ import { ExcelRenderer } from "../Core/ExcelRenderer.js";
  */
 export class MasterInteraction {
 
-    /** @type {RowSelectionHandler} Handles row selection interactions */
-    private rowSelectionHandler: RowSelectionHandler;
-
-    /** @type {RowResizingHandler} Handles row resizing interactions */
-    private rowResizingHandler: RowResizingHandler;
-
-    /** @type {RowAddingHandler} Handles adding new rows */
-    private rowAddingHandler: RowAddingHandler;
-
-    /** @type {ColSelectionHandler} Handles column selection interactions */
-    private colSelectionHandler: ColSelectionHandler;
-
-    /** @type {ColResizingHandler} Handles column resizing interactions */
-    private colResizingHandler: ColResizingHandler;
-
-    /** @type {ColAddingHandler} Handles adding new columns */
-    private colAddingHandler: ColAddingHandler;
-
-    /** @type {CellSelectionHandler} Handles cell selection interactions */
-    private cellSelectionHandler: CellSelectionHandler;
-
     /** @type {any} Stores the currently active feature handler */
     private currFeature: any;
 
@@ -68,77 +47,19 @@ export class MasterInteraction {
         cellData: CellData,
         excelRenderer: ExcelRenderer,
     ) {
-        /** Initializes row selection handler */
-        this.rowSelectionHandler = new RowSelectionHandler(
-            currentCellPosition,
-            rowObj,
-            rowData,
-            colData,
-            cellData,
-            excelRenderer,
-        );
-
-        /** Initializes row resizing handler */
-        this.rowResizingHandler = new RowResizingHandler(
-            rowObj,
-            rowData,
-            excelRenderer,
-        );
-
-        /** Initializes row adding handler */
-        this.rowAddingHandler = new RowAddingHandler(
-            rowObj,
-            rowData,
-            cellData,
-            excelRenderer
-        );
-
-        /** Initializes column selection handler */
-        this.colSelectionHandler = new ColSelectionHandler(
-            currentCellPosition,
-            colObj,
-            rowData,
-            colData,
-            cellData,
-            excelRenderer,
-        );
-
-        /** Initializes column resizing handler */
-        this.colResizingHandler = new ColResizingHandler(
-            colObj,
-            colData,
-            excelRenderer,
-        );
-
-        /** Initializes column adding handler */
-        this.colAddingHandler = new ColAddingHandler(
-            colObj,
-            rowData,
-            colData,
-            cellData,
-            excelRenderer,
-        );
-
-        /** Initializes cell selection handler */
-        this.cellSelectionHandler = new CellSelectionHandler(
-            currentCellPosition,
-            gridObj,
-            cellData,
-            excelRenderer,
-        );
 
         /** Sets the currently active feature handler to null */
         this.currFeature = null;
 
         /** Collects all feature handlers for event delegation */
         this.totalFeatures.push(
-            this.rowSelectionHandler,
-            this.rowResizingHandler,
-            this.rowAddingHandler,
-            this.colSelectionHandler,
-            this.colResizingHandler,
-            this.colAddingHandler,
-            this.cellSelectionHandler
+            new RowResizingHandler( rowObj, rowData, excelRenderer ),
+            new ColResizingHandler( colObj, colData, excelRenderer ),
+            new RowAddingHandler( rowObj, rowData, cellData, excelRenderer),
+            new ColAddingHandler( colObj, colData, cellData, excelRenderer ),
+            new RowSelectionHandler( currentCellPosition, rowObj, rowData, colData, cellData, excelRenderer ),
+            new ColSelectionHandler( currentCellPosition, colObj, rowData, colData, cellData, excelRenderer),
+            new CellSelectionHandler( currentCellPosition, gridObj, cellData, excelRenderer ),
         );
 
         /** Attaches global pointer event listeners */
@@ -162,6 +83,7 @@ export class MasterInteraction {
         for (const feature of this.totalFeatures) {
             if (feature.hitTest(e)) {
                 this.currFeature = feature;
+                this.currFeature.handlePointerDownEvent(e);
                 break;
             }
         }
@@ -172,8 +94,15 @@ export class MasterInteraction {
      * @param {MouseEvent} e Mouse event
      */
     private handlePointerMove(e: MouseEvent) {
-        if (this.currFeature === null) return;
-        this.currFeature.handlePointerMoveEvent(e);
+        if (this.currFeature !== null) {
+            this.currFeature.handlePointerMoveEvent(e);
+        } else {
+            for (const feature of this.totalFeatures) {
+                if (feature.getCursor(e)) {
+                    break;
+                }
+            }
+        }
     }
 
     /**
@@ -183,6 +112,7 @@ export class MasterInteraction {
     private handlePointerUp(e: MouseEvent) {
         if (this.currFeature === null) return;
         this.currFeature.handlePointerUpEvent(e);
+        this.currFeature = null;
     }
 
 }

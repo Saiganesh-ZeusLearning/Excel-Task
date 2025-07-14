@@ -2,6 +2,7 @@ import { RowData } from "../../DataStructures/RowData.js";
 import { RowLabelCanvas } from "../../Elements/RowLabelCanvas.js";
 import { cellHeight, totalVisibleRows } from "../../Utils/GlobalVariables.js";
 import { ExcelRenderer } from "../../Core/ExcelRenderer.js";
+import { CLIENT_RENEG_LIMIT } from "tls";
 
 /**
  * Handles row resizing interactions on the row label canvas.
@@ -30,8 +31,8 @@ export class RowResizingHandler {
      * @param {ExcelRenderer} excelRenderer Responsible for rendering updates
      */
     constructor(
-        rowObj: RowLabelCanvas, 
-        rowData: RowData, 
+        rowObj: RowLabelCanvas,
+        rowData: RowData,
         excelRenderer: ExcelRenderer,
     ) {
         /** Stores the row data model */
@@ -51,7 +52,6 @@ export class RowResizingHandler {
      * @returns {boolean} True if this handler should process the event
      */
     hitTest(e: MouseEvent) {
-        // Only respond if the event target is the row label canvas
         if (e.target !== this.rowObj.getRowCanvas) return false;
 
         const offsetY = e.offsetY;
@@ -59,15 +59,12 @@ export class RowResizingHandler {
 
         let y = 0;
 
-        // Iterate through all visible rows to find if pointer is near a row boundary
         for (let i = 0; i < totalVisibleRows; i++) {
             const row = this.rowObj.getStartRow + i;
             const height = this.rowData.get(row)?.height ?? cellHeight;
 
-            // If pointer is within 4px of the bottom of a row, enable resizing
             if (Math.abs(offsetY - (y + height)) <= 4 && offsetX > 20) {
-                this.rowObj.getRowCanvas.style.cursor = "s-resize";
-                this.handlePointerDownEvent(e, row);
+                this.targetRow = row;
                 return true;
             }
             y += height;
@@ -78,12 +75,10 @@ export class RowResizingHandler {
     /**
      * Handles mouse down event to start row resizing.
      * @param {MouseEvent} e Mouse event
-     * @param {number} row Index of the row to resize
      */
-    handlePointerDownEvent(e: MouseEvent, row: number) {
+    handlePointerDownEvent(e: MouseEvent) {
         this.rowData.RowSelection = { ...this.rowData.RowSelection, isRowResizing: true };
         this.resizeStartY = e.offsetY;
-        this.targetRow = row;
     }
 
     /**
@@ -91,21 +86,16 @@ export class RowResizingHandler {
      * @param {MouseEvent} e Mouse event
      */
     handlePointerMoveEvent(e: MouseEvent) {
-        // Only resize if a row is currently being resized
         if (!this.rowData.RowSelection.isRowResizing) return;
 
-        // Calculate the new height
         const diff = e.offsetY - this.resizeStartY;
         const currentHeight = this.rowData.get(this.targetRow)?.height ?? cellHeight;
         const newHeight = Math.max(20, currentHeight + diff);
 
-        // Update the row height in the data model
         this.rowData.set(this.targetRow, newHeight);
 
-        // Update the starting Y position for the next move event
         this.resizeStartY = e.offsetY;
 
-        // Trigger re-render
         this.excelRenderer.render();
     }
 
@@ -115,6 +105,13 @@ export class RowResizingHandler {
      */
     handlePointerUpEvent(e: MouseEvent) {
         this.rowData.RowSelection = { ...this.rowData.RowSelection, isRowResizing: false };
-        this.rowObj.getRowCanvas.style.cursor = "default";
+    }
+
+    getCursor(e: MouseEvent) {
+        if(this.hitTest(e)){
+            this.rowObj.getRowCanvas.style.cursor = "s-resize";
+            return true;
+        }
+        return false;
     }
 }
